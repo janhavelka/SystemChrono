@@ -1,14 +1,14 @@
-#include "SystemChrono64.h"
+#include "SystemChrono.h"
 
 #if !defined(ARDUINO)
-  #error "SystemChrono64: this library currently supports Arduino builds only."
+  #error "SystemChrono: this library currently supports Arduino builds only."
 #endif
 
 #if defined(ARDUINO_ARCH_ESP32)
   #include "esp_timer.h"
 #endif
 
-namespace SystemChrono64 {
+namespace SystemChrono {
 
 // ---------- internal: platform microsecond source ----------
 static inline int64_t micros64_impl() {
@@ -34,7 +34,7 @@ static inline int64_t micros64_impl() {
   return (int64_t)full;
 
 #else
-  #error "SystemChrono64: unsupported platform."
+  #error "SystemChrono: unsupported platform."
 #endif
 }
 
@@ -191,5 +191,4 @@ elapsedSeconds64 elapsedSeconds64::operator+(int64_t val_s) const {
   return r;
 }
 
-} // namespace SystemChrono64
-
+} // namespace SystemChrono

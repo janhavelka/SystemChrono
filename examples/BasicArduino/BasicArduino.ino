@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include "SystemChrono64.h"
+#include "SystemChrono.h"
 
-using namespace SystemChrono64;
+using namespace SystemChrono;
 
 elapsedMillis64 heartbeat;
 elapsedMicros64 block_time;
@@ -12,7 +12,7 @@ void setup() {
     ;
   }
   pinMode(LED_BUILTIN, OUTPUT);
-  Serial.println("SystemChrono64 BasicArduino example");
+  Serial.println("SystemChrono BasicArduino example");
 }
 
 void loop() {

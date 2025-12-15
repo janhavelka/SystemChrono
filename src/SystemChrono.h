@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-namespace SystemChrono64 {
+namespace SystemChrono {
 
 // ----------- Global 64-bit Time Accessors -----------
 int64_t micros64();
@@ -72,5 +72,4 @@ public:
   elapsedSeconds64 operator+(int64_t val_s) const;
 };
 
-} // namespace SystemChrono64
-
+} // namespace SystemChrono
