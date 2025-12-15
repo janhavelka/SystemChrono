@@ -1,4 +1,4 @@
-﻿# SystemChrono64
+# SystemChrono
 
 64-bit monotonic time helpers for Arduino, using `esp_timer_get_time()` on ESP32 and rollover-tracked `micros()` elsewhere. Provides `micros64()`, `millis64()`, and elapsed timer helpers that avoid the ~70 minute wrap of 32-bit timers.
 
@@ -16,14 +16,14 @@
 
 ## Getting started (Arduino IDE)
 - Copy `systemchrono` into your Arduino `libraries` folder or import as ZIP.
-- Include the header: `#include "SystemChrono64.h"`.
-- Open the example: `File -> Examples -> SystemChrono64 -> BasicArduino`.
+- Include the header: `#include "SystemChrono.h"`.
+- Open the example: `File -> Examples -> SystemChrono -> BasicArduino`.
 
 ## Usage
 ```cpp
 #include <Arduino.h>
-#include "SystemChrono64.h"
-using namespace SystemChrono64;
+#include "SystemChrono.h"
+using namespace SystemChrono;
 
 elapsedMillis64 heartbeat;
 
@@ -36,13 +36,13 @@ void loop() {
 ```
 
 ## Files
-- `src/SystemChrono64.h` / `src/SystemChrono64.cpp` – library API and implementation.
-- `library.properties` – Arduino metadata.
-- `library.json` – PlatformIO metadata.
-- `platformio.ini` – builds `examples/BasicPIO` for `esp32dev`.
-- `examples/BasicArduino/BasicArduino.ino` – Arduino IDE example.
-- `examples/BasicPIO/src/main.cpp` – PlatformIO example.
-- `LICENSE` – MIT.
+- `src/SystemChrono.h` / `src/SystemChrono.cpp` - library API and implementation.
+- `library.properties` - Arduino metadata.
+- `library.json` - PlatformIO metadata.
+- `platformio.ini` - builds `examples/BasicPIO` for `esp32dev`.
+- `examples/BasicArduino/BasicArduino.ino` - Arduino IDE example.
+- `examples/BasicPIO/src/main.cpp` - PlatformIO example.
+- `LICENSE` - MIT.
 
 ## Notes
 - ESP32 uses `esp_timer_get_time()` for true 64-bit monotonic microseconds.

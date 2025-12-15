@@ -1,5 +1,5 @@
 {
-  "name": "SystemChrono64",
+  "name": "SystemChrono",
   "version": "1.0.1",
   "description": "64-bit monotonic time helpers for Arduino; esp_timer on ESP32 and wrap-tracked micros() elsewhere.",
   "keywords": ["timer", "time", "micros", "millis", "esp32", "64-bit"],
