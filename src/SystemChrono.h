@@ -19,6 +19,28 @@ int64_t secondsSince(int64_t start_s);
 String formatTime(int64_t micros_since_boot);
 String formatNow();
 
+// Simple stopwatch utility (not thread-safe; intended for sketch-level use).
+class Stopwatch {
+private:
+  int64_t start_us_;
+  int64_t total_us_;
+  bool running_;
+
+public:
+  Stopwatch();
+
+  void start();   // Reset and start
+  void stop();    // Stop and accumulate
+  void resume();  // Resume without clearing accumulated time
+  void reset();   // Clear accumulated time; keeps running state
+
+  int64_t elapsedMicros() const;
+  int64_t elapsedMillis() const;
+  int64_t elapsedSeconds() const;
+
+  bool running() const;
+};
+
 class elapsedMicros64 {
 private:
   int64_t us_;

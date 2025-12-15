@@ -6,6 +6,7 @@
 - 64-bit micros/millis compatible with Arduino API.
 - Convenience elapsed helpers: `microsSince`, `millisSince`, `secondsSince`, and `seconds64()`.
 - Human-readable formatting: `formatTime(...)` or `formatNow()` to get `HH:MM:SS.mmm`.
+- Stopwatch helper with start/stop/resume/reset and elapsed in micros/millis/seconds.
 - `elapsedMicros64`, `elapsedMillis64`, `elapsedSeconds64` helper classes for simple interval logic.
 - Arduino metadata (`library.properties`) and PlatformIO metadata (`library.json`).
 - Examples for both Arduino IDE and PlatformIO.
@@ -28,15 +29,21 @@
 using namespace SystemChrono;
 
 elapsedMillis64 heartbeat;
+Stopwatch sw;
 
 void loop() {
+  if (!sw.running()) {
+    sw.start();
+  }
   if (heartbeat >= 1000) {
     heartbeat = 0;
-    Serial.printf("millis64=%lld micros64=%lld seconds64=%lld\n",
+    Serial.printf("millis64=%lld micros64=%lld seconds64=%lld stopwatch=%lld ms (%s)\n",
                   (long long)millis64(),
                   (long long)micros64(),
-                  (long long)seconds64());
-    Serial.println(formatNow());  // Human-readable HH:MM:SS.mmm
+                  (long long)seconds64(),
+                  (long long)sw.elapsedMillis(),
+                  formatTime(sw.elapsedMicros()).c_str());
+    Serial.println(formatNow());  // Human-readable HH:MM:SS.mmm from now
   }
 }
 ```

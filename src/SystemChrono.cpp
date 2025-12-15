@@ -90,6 +90,60 @@ String formatNow() {
   return formatTime(micros64());
 }
 
+// ================= Stopwatch =================
+
+Stopwatch::Stopwatch() : start_us_(0), total_us_(0), running_(false) {}
+
+void Stopwatch::start() {
+  total_us_ = 0;
+  start_us_ = micros64();
+  running_ = true;
+}
+
+void Stopwatch::stop() {
+  if (running_) {
+    total_us_ += microsSince(start_us_);
+    running_ = false;
+    start_us_ = 0;
+  }
+}
+
+void Stopwatch::resume() {
+  if (!running_) {
+    start_us_ = micros64();
+    running_ = true;
+  }
+}
+
+void Stopwatch::reset() {
+  total_us_ = 0;
+  if (running_) {
+    start_us_ = micros64();
+  } else {
+    start_us_ = 0;
+  }
+}
+
+int64_t Stopwatch::elapsedMicros() const {
+  int64_t acc = total_us_;
+  if (running_) {
+    acc += microsSince(start_us_);
+  }
+  return acc;
+}
+
+int64_t Stopwatch::elapsedMillis() const {
+  return elapsedMicros() / 1000LL;
+}
+
+int64_t Stopwatch::elapsedSeconds() const {
+  return elapsedMicros() / 1000000LL;
+}
+
+bool Stopwatch::running() const {
+  return running_;
+}
+
 // ================= elapsedMicros64 =================
 
 elapsedMicros64::elapsedMicros64() { us_ = micros64_impl(); }
