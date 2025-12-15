@@ -1,8 +1,7 @@
 /.pio/
 
-# VS Code: keep only shared recommendations, ignore the rest
+# VS Code: ignore editor settings
 /.vscode/*
-!.vscode/extensions.json
 .vscode/.browse.c_cpp.db*
 .vscode/ipch
 
