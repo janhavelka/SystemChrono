@@ -1,4 +1,5 @@
 #include "SystemChrono.h"
+#include <stdio.h>
 
 #if !defined(ARDUINO)
   #error "SystemChrono: this library currently supports Arduino builds only."
@@ -45,6 +46,48 @@ int64_t micros64() {
 
 int64_t millis64() {
   return micros64_impl() / 1000ULL;
+}
+
+int64_t seconds64() {
+  return micros64_impl() / 1000000ULL;
+}
+
+int64_t microsSince(int64_t start_us) {
+  return micros64_impl() - start_us;
+}
+
+int64_t millisSince(int64_t start_ms) {
+  return millis64() - start_ms;
+}
+
+int64_t secondsSince(int64_t start_s) {
+  return seconds64() - start_s;
+}
+
+String formatTime(int64_t micros_since_boot) {
+  int64_t total_ms = micros_since_boot / 1000LL;
+  bool negative = total_ms < 0;
+  if (negative) {
+    total_ms = -total_ms;
+  }
+
+  int64_t hours = total_ms / 3600000LL;
+  int64_t minutes = (total_ms / 60000LL) % 60LL;
+  int64_t seconds = (total_ms / 1000LL) % 60LL;
+  int64_t millis = total_ms % 1000LL;
+
+  char buf[32];
+  snprintf(buf, sizeof(buf), "%s%lld:%02lld:%02lld.%03lld",
+           negative ? "-" : "",
+           (long long)hours,
+           (long long)minutes,
+           (long long)seconds,
+           (long long)millis);
+  return String(buf);
+}
+
+String formatNow() {
+  return formatTime(micros64());
 }
 
 // ================= elapsedMicros64 =================

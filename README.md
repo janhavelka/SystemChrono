@@ -1,9 +1,11 @@
 # SystemChrono
 
-64-bit monotonic time helpers for Arduino, using `esp_timer_get_time()` on ESP32 and rollover-tracked `micros()` elsewhere. Provides `micros64()`, `millis64()`, and elapsed timer helpers that avoid the ~70 minute wrap of 32-bit timers.
+64-bit monotonic time helpers for Arduino, using `esp_timer_get_time()` on ESP32 and rollover-tracked `micros()` elsewhere. Provides `micros64()`, `millis64()`, `seconds64()`, simple elapsed helpers, human-readable formatting, and elapsed timer classes that avoid the ~70 minute wrap of 32-bit timers.
 
 ## Features
 - 64-bit micros/millis compatible with Arduino API.
+- Convenience elapsed helpers: `microsSince`, `millisSince`, `secondsSince`, and `seconds64()`.
+- Human-readable formatting: `formatTime(...)` or `formatNow()` to get `HH:MM:SS.mmm`.
 - `elapsedMicros64`, `elapsedMillis64`, `elapsedSeconds64` helper classes for simple interval logic.
 - Arduino metadata (`library.properties`) and PlatformIO metadata (`library.json`).
 - Examples for both Arduino IDE and PlatformIO.
@@ -30,7 +32,11 @@ elapsedMillis64 heartbeat;
 void loop() {
   if (heartbeat >= 1000) {
     heartbeat = 0;
-    Serial.printf("millis64=%lld micros64=%lld\n", (long long)millis64(), (long long)micros64());
+    Serial.printf("millis64=%lld micros64=%lld seconds64=%lld\n",
+                  (long long)millis64(),
+                  (long long)micros64(),
+                  (long long)seconds64());
+    Serial.println(formatNow());  // Human-readable HH:MM:SS.mmm
   }
 }
 ```

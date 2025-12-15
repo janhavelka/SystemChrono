@@ -8,6 +8,16 @@ namespace SystemChrono {
 // ----------- Global 64-bit Time Accessors -----------
 int64_t micros64();
 int64_t millis64();
+int64_t seconds64();
+
+// Convenient elapsed calculations against a stored timestamp.
+int64_t microsSince(int64_t start_us);
+int64_t millisSince(int64_t start_ms);
+int64_t secondsSince(int64_t start_s);
+
+// Human-readable formatting: HH:MM:SS.mmm from microseconds since boot.
+String formatTime(int64_t micros_since_boot);
+String formatNow();
 
 class elapsedMicros64 {
 private:

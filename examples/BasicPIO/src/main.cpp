@@ -11,7 +11,7 @@ void setup() {
   while (!Serial) {
     ;
   }
-  pinMode(LED_BUILTIN, OUTPUT);
+  //pinMode(LED_BUILTIN, OUTPUT);
   measurement_us = 0;
   Serial.println("SystemChrono BasicPIO example");
 }
@@ -19,15 +19,17 @@ void setup() {
 void loop() {
   if (heartbeat_ms >= 1000) {
     heartbeat_ms = 0;
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    Serial.printf("millis64: %lld, micros64: %lld\n", (long long)millis64(), (long long)micros64());
-  }
+    //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
-  measurement_us = 0;
-  delayMicroseconds(50);
-  int64_t elapsed = measurement_us;
-  if (elapsed > 0) {
-    Serial.printf("Measured %lld us\n", (long long)elapsed);
+    measurement_us = 0;
+    delayMicroseconds(50);
+    int64_t elapsed = measurement_us;
+
+    Serial.printf("millis64: %lld, micros64: %lld, human: %s, block: %lld us\n",
+                  (long long)millis64(),
+                  (long long)micros64(),
+                  formatNow().c_str(),
+                  (long long)elapsed);
   }
 
   delay(10);
