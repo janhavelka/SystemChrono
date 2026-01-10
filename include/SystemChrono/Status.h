@@ -1,6 +1,6 @@
 /**
  * @file Status.h
- * @brief Error handling types for YourLib.
+ * @brief Error handling types for SystemChrono.
  *
  * Provides a lightweight, zero-allocation error model. All error messages
  * are static string literals.
@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-namespace YourLibrary {
+namespace SystemChrono {
 
 /**
  * @brief Error code enumeration.
@@ -78,4 +78,4 @@ struct Status {
  */
 constexpr Status Ok() { return Status(Err::OK, 0, ""); }
 
-}  // namespace YourLibrary
+}  // namespace SystemChrono

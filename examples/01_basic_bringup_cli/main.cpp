@@ -1,8 +1,13 @@
 /**
  * @file main.cpp
- * @brief Interactive CLI example for YourLib.
+ * @brief Interactive CLI example for SystemChrono.
  *
- * Demonstrates library lifecycle with serial commands.
+ * Demonstrates all SystemChrono features with serial commands:
+ * - 64-bit time accessors (micros64, millis64, seconds64)
+ * - Elapsed timer classes (ElapsedMicros64, ElapsedMillis64, ElapsedSeconds64)
+ * - Stopwatch with start/stop/resume/reset
+ * - Human-readable time formatting
+ *
  * Type 'help' for available commands.
  */
 
@@ -10,16 +15,21 @@
 
 #include "examples/common/BoardPins.h"
 #include "examples/common/Log.h"
-#include "YourLibrary/Version.h"
-#include "YourLibrary/YourLib.h"
+#include "SystemChrono/Version.h"
+#include "SystemChrono/SystemChrono.h"
 
-static YourLibrary::YourLib g_lib;
+using namespace SystemChrono;
+
+// Global timers and stopwatch
+static ElapsedMillis64 g_heartbeat(0);
+static ElapsedMicros64 g_measurement(0);
+static Stopwatch g_stopwatch;
 
 /**
  * @brief Non-blocking line reader from Serial.
  * @return Complete line (without newline) or empty string if incomplete.
  */
-static String read_line() {
+static String readLine() {
   static String buffer;
   while (Serial.available()) {
     const char c = static_cast<char>(Serial.read());
@@ -41,110 +51,156 @@ static String read_line() {
 /**
  * @brief Print available commands.
  */
-static void print_help() {
+static void printHelp() {
   Serial.println();
-  Serial.println(F("=== YourLib CLI ==="));
+  Serial.println(F("=== SystemChrono CLI ==="));
   Serial.print(F("Version: "));
-  Serial.println(YourLibrary::VERSION);
+  Serial.println(SystemChrono::VERSION);
   Serial.print(F("Built:   "));
-  Serial.println(YourLibrary::BUILD_TIMESTAMP);
+  Serial.println(SystemChrono::BUILD_TIMESTAMP);
   Serial.print(F("Commit:  "));
-  Serial.print(YourLibrary::GIT_COMMIT);
+  Serial.print(SystemChrono::GIT_COMMIT);
   Serial.print(F(" ("));
-  Serial.print(YourLibrary::GIT_STATUS);
+  Serial.print(SystemChrono::GIT_STATUS);
   Serial.println(F(")"));
-  Serial.println(F("Commands:"));
-  Serial.println(F("  help          - Show this help"));
-  Serial.println(F("  start [ms]    - Start with interval (default: 1000ms)"));
-  Serial.println(F("  stop          - Stop the library"));
-  Serial.println(F("  status        - Show current state"));
+  Serial.println();
+  Serial.println(F("Time Commands:"));
+  Serial.println(F("  time         - Show current 64-bit time values"));
+  Serial.println(F("  format       - Show human-readable time (HH:MM:SS.mmm)"));
+  Serial.println();
+  Serial.println(F("Stopwatch Commands:"));
+  Serial.println(F("  start        - Reset and start stopwatch"));
+  Serial.println(F("  stop         - Stop stopwatch"));
+  Serial.println(F("  resume       - Resume stopwatch"));
+  Serial.println(F("  reset        - Clear stopwatch"));
+  Serial.println(F("  elapsed      - Show stopwatch elapsed time"));
+  Serial.println();
+  Serial.println(F("Other:"));
+  Serial.println(F("  measure      - Measure delayMicroseconds(50) overhead"));
+  Serial.println(F("  help         - Show this help"));
   Serial.println();
 }
 
 /**
- * @brief Handle 'start' command.
- * @param arg Optional interval argument (e.g., "500").
+ * @brief Handle 'time' command - show current time values.
  */
-static void cmd_start(const String& arg) {
-  if (g_lib.isInitialized()) {
-    LOGI("Already running. Use 'stop' first.");
-    return;
-  }
+static void cmdTime() {
+  LOGI("micros64:  %lld", static_cast<long long>(micros64()));
+  LOGI("millis64:  %lld", static_cast<long long>(millis64()));
+  LOGI("seconds64: %lld", static_cast<long long>(seconds64()));
+}
 
-  uint32_t interval = 1000;
-  if (arg.length() > 0) {
-    const long val = arg.toInt();
-    if (val > 0) {
-      interval = static_cast<uint32_t>(val);
-    }
-  }
+/**
+ * @brief Handle 'format' command - show formatted time.
+ */
+static void cmdFormat() {
+  LOGI("Current time: %s", formatNow().c_str());
+}
 
-  YourLibrary::Config config;
-  config.intervalMs = interval;
-  config.ledPin = pins::LED;
-
-  const YourLibrary::Status st = g_lib.begin(config);
-  if (!st.ok()) {
-    LOGE("begin() failed: %s (code=%d)", st.msg, static_cast<int>(st.code));
-  } else {
-    LOGI("Started. interval=%lu ms, led_pin=%d",
-         static_cast<unsigned long>(interval), pins::LED);
-  }
+/**
+ * @brief Handle 'start' command.
+ */
+static void cmdStart() {
+  g_stopwatch.start();
+  LOGI("Stopwatch started");
 }
 
 /**
  * @brief Handle 'stop' command.
  */
-static void cmd_stop() {
-  if (!g_lib.isInitialized()) {
-    LOGI("Not running.");
-    return;
-  }
-  g_lib.end();
-  LOGI("Stopped.");
+static void cmdStop() {
+  g_stopwatch.stop();
+  LOGI("Stopwatch stopped");
 }
 
 /**
- * @brief Handle 'status' command.
+ * @brief Handle 'resume' command.
  */
-static void cmd_status() {
-  LOGI("Running: %s", g_lib.isInitialized() ? "yes" : "no");
+static void cmdResume() {
+  g_stopwatch.resume();
+  LOGI("Stopwatch resumed");
+}
+
+/**
+ * @brief Handle 'reset' command.
+ */
+static void cmdReset() {
+  g_stopwatch.reset();
+  LOGI("Stopwatch reset");
+}
+
+/**
+ * @brief Handle 'elapsed' command.
+ */
+static void cmdElapsed() {
+  LOGI("Stopwatch: %lld ms (%s) [%s]",
+       static_cast<long long>(g_stopwatch.elapsedMillis()),
+       formatTime(g_stopwatch.elapsedMicros()).c_str(),
+       g_stopwatch.isRunning() ? "running" : "stopped");
+}
+
+/**
+ * @brief Handle 'measure' command - measure timing overhead.
+ */
+static void cmdMeasure() {
+  g_measurement = 0;
+  delayMicroseconds(50);
+  int64_t elapsed = g_measurement;
+  LOGI("delayMicroseconds(50) took %lld us", static_cast<long long>(elapsed));
 }
 
 /**
  * @brief Process a single command line.
  * @param line The command line to process.
  */
-static void process_command(const String& line) {
+static void processCommand(const String& line) {
   if (line == "help") {
-    print_help();
+    printHelp();
+  } else if (line == "time") {
+    cmdTime();
+  } else if (line == "format") {
+    cmdFormat();
   } else if (line == "start") {
-    cmd_start("");
-  } else if (line.startsWith("start ")) {
-    cmd_start(line.substring(6));
+    cmdStart();
   } else if (line == "stop") {
-    cmd_stop();
-  } else if (line == "status") {
-    cmd_status();
+    cmdStop();
+  } else if (line == "resume") {
+    cmdResume();
+  } else if (line == "reset") {
+    cmdReset();
+  } else if (line == "elapsed") {
+    cmdElapsed();
+  } else if (line == "measure") {
+    cmdMeasure();
   } else {
-    LOGE("Unknown command. Type 'help' for usage.");
+    LOGE("Unknown command '%s'. Type 'help' for usage.", line.c_str());
   }
 }
 
 void setup() {
   log_begin(115200);
   delay(100);  // Allow USB CDC to initialize
-  print_help();
+
+  // Initialize stopwatch
+  g_stopwatch.start();
+
+  printHelp();
   Serial.println(F("Ready. Type a command:"));
 }
 
 void loop() {
-  // Non-blocking tick
-  g_lib.tick(millis());
+  // Periodic heartbeat output (every 5 seconds)
+  if (g_heartbeat >= 5000) {
+    g_heartbeat = 0;
+    LOGI("Uptime: %s | Stopwatch: %lld ms [%s]",
+         formatNow().c_str(),
+         static_cast<long long>(g_stopwatch.elapsedMillis()),
+         g_stopwatch.isRunning() ? "running" : "stopped");
+  }
 
   // Non-blocking command processing
-  const String line = read_line();
+  const String line = readLine();
   if (line.length() > 0) {
-    process_command(line);
+    processCommand(line);
   }
 }

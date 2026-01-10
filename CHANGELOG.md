@@ -7,36 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Initial library template structure
-- `begin(Config) -> Status`, `tick(now_ms)`, `end()` API pattern
-- Status/Err type with static error messages
-- Config injection pattern (no hardcoded pins)
-- Basic CLI example (`01_basic_bringup_cli`)
-- Compile-only skeleton example (`00_compile_only`)
-- GitHub Actions CI for ESP32-S2 and ESP32-S3
-- Doxygen-style documentation in public headers
-
 ### Changed
-- Nothing yet
+- Restructured from porting_library to template structure
+- Renamed classes to PascalCase: `ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64`
+- Added lowercase aliases for backward compatibility
+- Renamed `Stopwatch::running()` to `Stopwatch::isRunning()` for consistency
+- Added comprehensive Doxygen documentation
 
-### Deprecated
-- Nothing yet
-
-### Removed
-- Nothing yet
+## [1.0.1] - 2026-01-10
 
 ### Fixed
-- Nothing yet
+- Minor documentation updates
 
-### Security
-- Nothing yet
-
-## [0.1.0] - 2026-01-10
+## [1.0.0] - 2026-01-10
 
 ### Added
-- Initial release with template structure
-- ESP32-S2 and ESP32-S3 support
+- Initial release
+- 64-bit time accessors: `micros64()`, `millis64()`, `seconds64()`
+- Elapsed helpers: `microsSince()`, `millisSince()`, `secondsSince()`
+- Elapsed timer classes: `elapsedMicros64`, `elapsedMillis64`, `elapsedSeconds64`
+- `Stopwatch` class with start/stop/resume/reset
+- Human-readable formatting: `formatTime()`, `formatNow()`
+- ESP32 optimized using `esp_timer_get_time()`
+- Generic Arduino support with wrap-tracked `micros()`
 
-[Unreleased]: https://github.com/YOUR_USERNAME/esp32-platformio-library-template/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/YOUR_USERNAME/esp32-platformio-library-template/releases/tag/v0.1.0
+[Unreleased]: https://github.com/janhavelka/SystemChrono/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/janhavelka/SystemChrono/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/janhavelka/SystemChrono/releases/tag/v1.0.0

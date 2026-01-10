@@ -1,189 +1,210 @@
-# esp32-platformio-library-template
+# SystemChrono
 
-A clean, robust **single-library** template for **ESP32 (S2/S3)** using **Arduino framework** with **PlatformIO**.
+64-bit monotonic time helpers for Arduino, using `esp_timer_get_time()` on ESP32 and rollover-tracked `micros()` elsewhere.
 
-[![CI](https://github.com/YOUR_USERNAME/esp32-platformio-library-template/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/esp32-platformio-library-template/actions/workflows/ci.yml)
+[![CI](https://github.com/janhavelka/SystemChrono/actions/workflows/ci.yml/badge.svg)](https://github.com/janhavelka/SystemChrono/actions/workflows/ci.yml)
+
+## Features
+
+- **64-bit time accessors:** `micros64()`, `millis64()`, `seconds64()` - no 70-minute rollover
+- **Elapsed helpers:** `microsSince()`, `millisSince()`, `secondsSince()` for interval checks
+- **Elapsed timer classes:** `ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64` for non-blocking intervals
+- **Stopwatch:** Start/stop/resume/reset with microsecond precision
+- **Human-readable formatting:** `formatTime()`, `formatNow()` → `HH:MM:SS.mmm`
+- **ESP32 optimized:** Uses `esp_timer_get_time()` for true 64-bit monotonic time
+- **Arduino compatible:** Falls back to wrap-tracked `micros()` on other platforms
 
 ## Quickstart
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/esp32-platformio-library-template.git
-cd esp32-platformio-library-template
+git clone https://github.com/janhavelka/SystemChrono.git
+cd SystemChrono
 
 # Build for ESP32-S3
-pio run -e ex_cli_s3
+pio run -e cli_esp32s3
 
 # Upload and monitor
-pio run -e ex_cli_s3 -t upload && pio device monitor -e ex_cli_s3
+pio run -e cli_esp32s3 -t upload && pio device monitor -e cli_esp32s3
 ```
 
 ## Supported Targets
 
-| Board                    | Environment       | Notes                    |
-| ------------------------ | ----------------- | ------------------------ |
-| ESP32-S3-MINI-1U-N4R2    | `ex_cli_s3`       | PSRAM enabled            |
-| ESP32-S2-MINI-2-N4       | `ex_cli_s2`       | No PSRAM                 |
+| Board                 | Environment           | Notes        |
+| --------------------- | --------------------- | ------------ |
+| ESP32-S3-DevKitC-1    | `cli_esp32s3`         | PSRAM enabled |
+| ESP32-S2-Saola-1      | `cli_esp32s2`         | USB CDC      |
+
+## Usage
+
+### Basic Time Accessors
+
+```cpp
+#include "SystemChrono/SystemChrono.h"
+
+using namespace SystemChrono;
+
+void loop() {
+  // 64-bit timestamps - no 70-minute rollover
+  int64_t us = micros64();
+  int64_t ms = millis64();
+  int64_t s = seconds64();
+  
+  Serial.printf("micros=%lld millis=%lld seconds=%lld\n",
+                (long long)us, (long long)ms, (long long)s);
+}
+```
+
+### Elapsed Timer Classes
+
+```cpp
+#include "SystemChrono/SystemChrono.h"
+
+using namespace SystemChrono;
+
+ElapsedMillis64 heartbeat;
+
+void loop() {
+  // Non-blocking 1-second interval
+  if (heartbeat >= 1000) {
+    heartbeat = 0;  // Reset timer
+    Serial.println("Tick!");
+  }
+}
+```
+
+### Stopwatch
+
+```cpp
+#include "SystemChrono/SystemChrono.h"
+
+using namespace SystemChrono;
+
+Stopwatch sw;
+
+void measureSomething() {
+  sw.start();
+  
+  // ... do work ...
+  
+  sw.stop();
+  Serial.printf("Elapsed: %lld ms\n", (long long)sw.elapsedMillis());
+}
+```
+
+### Human-Readable Formatting
+
+```cpp
+#include "SystemChrono/SystemChrono.h"
+
+using namespace SystemChrono;
+
+void printUptime() {
+  // Current time since boot: "01:23:45.678"
+  Serial.println(formatNow());
+  
+  // Format arbitrary timestamp
+  Serial.println(formatTime(sw.elapsedMicros()));
+}
+```
+
+## API Reference
+
+### Free Functions
+
+| Function                          | Description                                    |
+| --------------------------------- | ---------------------------------------------- |
+| `int64_t micros64()`              | Monotonic microseconds since boot              |
+| `int64_t millis64()`              | Monotonic milliseconds since boot              |
+| `int64_t seconds64()`             | Monotonic seconds since boot                   |
+| `int64_t microsSince(int64_t)`    | Elapsed microseconds since timestamp           |
+| `int64_t millisSince(int64_t)`    | Elapsed milliseconds since timestamp           |
+| `int64_t secondsSince(int64_t)`   | Elapsed seconds since timestamp                |
+| `String formatTime(int64_t)`      | Format microseconds as `HH:MM:SS.mmm`          |
+| `String formatNow()`              | Format current time as `HH:MM:SS.mmm`          |
+
+### Stopwatch Class
+
+| Method                    | Description                                |
+| ------------------------- | ------------------------------------------ |
+| `void start()`            | Reset and start                            |
+| `void stop()`             | Stop and accumulate elapsed time           |
+| `void resume()`           | Resume without clearing accumulated time   |
+| `void reset()`            | Clear accumulated time                     |
+| `int64_t elapsedMicros()` | Get accumulated microseconds               |
+| `int64_t elapsedMillis()` | Get accumulated milliseconds               |
+| `int64_t elapsedSeconds()`| Get accumulated seconds                    |
+| `bool isRunning()`        | Check if currently running                 |
+
+### Elapsed Timer Classes
+
+All three classes (`ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64`) support:
+
+- Implicit conversion to `int64_t` (returns elapsed time)
+- Assignment `= 0` to reset
+- Arithmetic operators `+=`, `-=`, `+`, `-`
 
 ## Versioning
 
-The library version is defined in [library.json](library.json). A pre-build script automatically generates `include/YourLibrary/Version.h` with version constants.
-
-**Print version in your code:**
-```cpp
-#include "YourLibrary/Version.h"
-
-Serial.println(YourLibrary::VERSION);           // "0.1.0"
-Serial.println(YourLibrary::VERSION_FULL);      // "0.1.0 (a1b2c3d, 2026-01-10 15:30:00)"
-Serial.println(YourLibrary::BUILD_TIMESTAMP);   // "2026-01-10 15:30:00"
-Serial.println(YourLibrary::GIT_COMMIT);        // "a1b2c3d"
-```
-
-**Available constants:**
-- `VERSION`, `VERSION_MAJOR`, `VERSION_MINOR`, `VERSION_PATCH`, `VERSION_CODE`
-- `BUILD_DATE`, `BUILD_TIME`, `BUILD_TIMESTAMP`
-- `GIT_COMMIT`, `GIT_STATUS` (clean/dirty)
-- `VERSION_FULL` (version + build info)
-
-**Update version:** Edit `library.json` only. `Version.h` is auto-generated on every build.
-
-## API
-
-The library follows a **begin/tick/end** lifecycle:
+The library version is defined in [library.json](library.json). A pre-build script automatically generates `include/SystemChrono/Version.h`.
 
 ```cpp
-#include "YourLibrary/YourLib.h"
+#include "SystemChrono/Version.h"
 
-YourLibrary::YourLib lib;
-
-void setup() {
-  YourLibrary::Config cfg;
-cfg.ledPin = 48;
-cfg.intervalMs = 1000;
-  YourLibrary::Status st = lib.begin(cfg);
-  if (!st.ok()) {
-    // Handle error: st.code, st.msg, st.detail
-  }
-}
-
-void loop() {
-  lib.tick(millis());  // Non-blocking, call every iteration
-}
-
-// Optional cleanup
-void shutdown() {
-  lib.end();
-}
+Serial.println(SystemChrono::VERSION);           // "1.0.1"
+Serial.println(SystemChrono::VERSION_FULL);      // "1.0.1 (a1b2c3d, 2026-01-10 15:30:00)"
+Serial.println(SystemChrono::BUILD_TIMESTAMP);   // "2026-01-10 15:30:00"
+Serial.println(SystemChrono::GIT_COMMIT);        // "a1b2c3d"
 ```
-
-### Core Methods
-
-| Method                            | Description                              |
-| --------------------------------- | ---------------------------------------- |
-| `Status begin(const Config&)`     | Initialize with configuration            |
-| `void tick(uint32_t now_ms)`      | Cooperative update, call from `loop()`   |
-| `void end()`                      | Stop and release resources               |
-| `bool isInitialized() const`      | Check if library is initialized          |
-| `const Config& getConfig() const` | Get current configuration                |
-| `uint32_t getNextTickMs() const`  | Get next scheduled tick time             |
-
-## Config
-
-Configuration is injected via `Config` struct. The library **never hardcodes pins**.
-
-```cpp
-struct Config {
-  int ledPin = -1;           // GPIO for LED (-1 = disabled)
-  int uartRxPin = -1;        // Example: UART RX pin
-  int uartTxPin = -1;        // Example: UART TX pin
-  uint32_t intervalMs = 1000; // Periodic tick interval
-};
-```
-
-See [include/YourLibrary/Config.h](include/YourLibrary/Config.h) for full definition.
-
-### Pin Mapping
-
-The library **does not define pin defaults**. All pins are application-provided via `Config`.
-
-For convenience, examples use reference pin mappings defined in [examples/common/BoardPins.h](examples/common/BoardPins.h):
-
-| Signal    | GPIO | Note                               |
-| --------- | ---- | ---------------------------------- |
-| SDA       | 8    | I2C data line                      |
-| SCL       | 9    | I2C clock line                     |
-| SPI_MOSI  | 11   | SPI master out, slave in           |
-| SPI_SCK   | 12   | SPI serial clock                   |
-| SPI_MISO  | 13   | SPI master in, slave out           |
-| LED       | 48   | Onboard LED (48=S3, 18=S2 typical) |
-
-**These are example defaults for ESP32-S2 / ESP32-S3 reference hardware only.** Override for your board.
-
-## Error Model
-
-All fallible operations return `Status`:
-
-```cpp
-struct Status {
-  Err code;           // Error category (OK, INVALID_CONFIG, TIMEOUT, etc.)
-  int32_t detail;     // Vendor/library-specific error code
-  const char* msg;    // Human-readable message (STATIC STRING ONLY)
-};
-```
-
-**Important:** `msg` must always point to a static string literal. Never allocate or construct strings dynamically. This ensures zero heap allocation in error paths.
-
-### Error Codes
-
-| Code                  | Meaning                                    |
-| --------------------- | ------------------------------------------ |
-| `OK`                  | Success                                    |
-| `INVALID_CONFIG`      | Invalid configuration parameter            |
-| `TIMEOUT`             | Operation timed out                        |
-| `RESOURCE_BUSY`       | Resource is busy                           |
-| `COMM_FAILURE`        | Communication or I/O error                 |
-| `NOT_INITIALIZED`     | Not initialized or not ready               |
-| `OUT_OF_MEMORY`       | Memory allocation failed                   |
-| `HARDWARE_FAULT`      | Hardware peripheral error                  |
-| `EXTERNAL_LIB_ERROR`  | Error from wrapped third-party code        |
-| `INTERNAL_ERROR`      | Internal logic error                       |
-
-## Threading & Timing Model
-
-- **Non-blocking:** `tick()` returns immediately; no delays in steady state.
-- **Single-threaded:** Call all methods from the same task/thread (typically Arduino `loop()`).
-- **Cooperative:** You control when work happens by calling `tick()`.
-- **Deterministic:** Predictable execution time; no hidden sleeps or waits.
-
-**ISR Safety:** Do not call library methods from ISRs. Set flags in ISRs and handle them in `tick()`.
-
-## Design Notes
-
-This library follows embedded best practices:
-
-1. **Deterministic behavior:** No hidden delays, no unbounded loops.
-2. **Non-blocking:** All operations complete quickly or report busy.
-3. **Config injection:** Hardware pins and parameters come from `Config`, not hardcoded.
-4. **No hidden NVS:** No persistent storage side effects unless explicitly documented and opt-in.
-5. **Static error strings:** `Status.msg` is always a string literal, never heap-allocated.
-6. **No steady-state allocations:** All memory is allocated in `begin()`, none in `tick()`.
 
 ## Examples
 
 | Example                  | Description                                      |
 | ------------------------ | ------------------------------------------------ |
-| `00_compile_only`        | Minimal skeleton; verifies library compiles      |
-| `01_basic_bringup_cli`   | Interactive CLI for testing start/stop           |
+| `01_basic_bringup_cli`   | Interactive CLI demonstrating all features       |
 
 ### Building Examples
 
 ```bash
-# Compile-only skeleton (S3)
-pio run -e ex_compile_only_s3
+# CLI example (S3)
+pio run -e cli_esp32s3 -t upload
+pio device monitor -e cli_esp32s3
 
 # CLI example (S2)
-pio run -e ex_cli_s2 -t upload
-pio device monitor -e ex_cli_s2
+pio run -e cli_esp32s2 -t upload
+pio device monitor -e cli_esp32s2
+```
+
+## Threading & Timing Model
+
+- **Single-threaded:** All functions safe to call from main loop
+- **Non-blocking:** No delays or waits
+- **ISR safety (ESP32):** `micros64()` uses `esp_timer_get_time()` which is ISR-safe
+- **ISR safety (other):** Uses `noInterrupts()`/`interrupts()` briefly for wrap tracking
+
+## Platform Notes
+
+### ESP32
+Uses `esp_timer_get_time()` for true 64-bit monotonic microseconds since boot. Thread-safe.
+
+### Other Arduino Platforms
+Extends 32-bit `micros()` to 64-bit via wrap tracking. Requires periodic calls (at least once per ~70 minutes) to detect rollovers. Uses interrupt-disable briefly when reading.
+
+## Project Structure
+
+```
+├── include/SystemChrono/  # Public headers (library API)
+│   ├── Config.h          # Configuration struct (reserved)
+│   ├── Status.h          # Error types
+│   ├── SystemChrono.h    # Main API header
+│   └── Version.h         # Auto-generated version info
+├── src/                  # Implementation
+│   └── SystemChrono.cpp
+├── examples/
+│   ├── 01_basic_bringup_cli/  # CLI demo
+│   └── common/           # Shared example utilities
+├── library.json          # PlatformIO library metadata
+└── platformio.ini        # Build environments
 ```
 
 ## Versioning Policy
@@ -193,99 +214,6 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/):
 - **MAJOR:** Breaking API changes
 - **MINOR:** New features, backward compatible
 - **PATCH:** Bug fixes, backward compatible
-
-### Release Checklist
-
-1. Update version in `library.json`
-2. Update `CHANGELOG.md` (move Unreleased to new version)
-3. Commit: `git commit -m "chore: release v1.2.3"`
-4. Tag: `git tag v1.2.3`
-5. Push: `git push && git push --tags`
-
-## Project Structure
-
-```
-├── include/YourLibrary/   # Public headers (library API)
-│   ├── Config.h          # Configuration struct
-│   ├── Status.h          # Error types
-│   └── YourLib.h         # Main library class
-├── src/                  # Implementation
-│   └── YourLib.cpp
-├── examples/
-│   ├── 00_compile_only/  # Minimal skeleton
-│   ├── 01_basic_bringup_cli/  # CLI demo
-│   └── common/           # Shared example utilities
-├── .github/workflows/    # CI configuration
-├── library.json          # PlatformIO library metadata
-└── platformio.ini        # Build environments
-```
-
-## Extending This Template
-
-This template is designed to scale across diverse embedded projects. When adding new functionality:
-
-### Device Integration Patterns
-
-**RS485/Modbus:**
-- Use transaction-based state machine (Idle → Tx → Rx → Done)
-- Implement inter-character and frame timeouts via deadlines
-- Optional: RX drain task for high-throughput scenarios
-
-**GSM Modems / AT Commands:**
-- Command queue with retry logic and per-command timeouts
-- Handle unsolicited responses (+CMT, +CREG, etc.) in tick()
-- Some commands take 30+ seconds - use deadline-based waits
-
-**High-Rate ADC:**
-- ISR writes to ring buffer (minimal work)
-- Optional processing task drains buffer
-- Document buffer size requirements in Config
-
-**Stepper Motors:**
-- Non-blocking position tracking API
-- Use hardware timers or RMT for pulse generation
-- Never block waiting for motion completion
-
-**I2C/SPI Sensors:**
-- Short transactions in tick(), avoid long bus holds
-- Implement timeout + retry with exponential backoff
-- Abstract shared bus ownership if multiple devices
-
-**SD Card Logging:**
-- Buffer writes in RAM, flush periodically or on demand
-- Optional task for background flushing
-- Handle write failures gracefully (retry, report error)
-
-### FreeRTOS Tasks (When to Use)
-
-Default: **Do not use tasks.** Implement as non-blocking tick() pattern.
-
-Use tasks only when:
-- Continuous streaming required (ADC sampling, audio)
-- Blocking I/O simplifies correctness (UART RX, sockets)
-
-When adding tasks:
-- Keep them thin adapters calling library tick()
-- Document stack size, priority, and lifecycle in Config
-- Provide both task-based AND non-blocking APIs when possible
-- Update README threading model section
-
-### Modification Checklist
-
-Before extending:
-1. Does it increase predictability? (If no, reconsider)
-2. Add Doxygen docs to all new public APIs
-3. Update README with threading/timing impacts
-4. Keep Config struct board-agnostic (no hardcoded pins)
-5. Ensure tick() remains bounded and non-blocking
-6. Add entry to CHANGELOG.md
-
-## Assumptions
-
-- Target boards have at least 4MB flash.
-- Arduino framework provides `millis()` returning `uint32_t`.
-- Examples assume onboard LED on GPIO 48 (S3) - adjust in `BoardPins.h`.
-- Single-threaded by default; tasks are opt-in via Config.
 
 ## Contributing
 
