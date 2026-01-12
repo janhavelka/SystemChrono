@@ -17,34 +17,41 @@
 #error "LOG_LEVEL must be 0-4 (0=off, 1=error, 2=info, 3=debug, 4=trace)"
 #endif
 
+// Handle USB Serial on ESP32-S2/S3 with USB CDC enabled
+// Note: When ARDUINO_USB_CDC_ON_BOOT is enabled:
+// - ESP32-S3: Serial is mapped to USB CDC (HWCDC)
+// - ESP32-S2: Serial is mapped to USB CDC (USBCDC)
+// Both use "Serial" when USB CDC on boot is enabled
+#define LOG_SERIAL Serial
+
 /**
  * @brief Initialize serial for logging.
  * @param baud Baud rate (default: 115200).
  */
 inline void log_begin(unsigned long baud = 115200) {
-  Serial.begin(baud);
+  LOG_SERIAL.begin(baud);
 }
 
 /// @brief Log error message (level >= 1)
 #define LOGE(fmt, ...) \
   do { \
-    if (LOG_LEVEL >= 1) Serial.printf("[E] " fmt "\n", ##__VA_ARGS__); \
+    if (LOG_LEVEL >= 1) LOG_SERIAL.printf("[E] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 /// @brief Log info message (level >= 2)
 #define LOGI(fmt, ...) \
   do { \
-    if (LOG_LEVEL >= 2) Serial.printf("[I] " fmt "\n", ##__VA_ARGS__); \
+    if (LOG_LEVEL >= 2) LOG_SERIAL.printf("[I] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 /// @brief Log debug message (level >= 3)
 #define LOGD(fmt, ...) \
   do { \
-    if (LOG_LEVEL >= 3) Serial.printf("[D] " fmt "\n", ##__VA_ARGS__); \
+    if (LOG_LEVEL >= 3) LOG_SERIAL.printf("[D] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 /// @brief Log trace message (level >= 4)
 #define LOGT(fmt, ...) \
   do { \
-    if (LOG_LEVEL >= 4) Serial.printf("[T] " fmt "\n", ##__VA_ARGS__); \
+    if (LOG_LEVEL >= 4) LOG_SERIAL.printf("[T] " fmt "\n", ##__VA_ARGS__); \
   } while (0)

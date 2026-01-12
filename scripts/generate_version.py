@@ -5,10 +5,19 @@ Called automatically by PlatformIO before each build.
 """
 
 import json
-import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
+
+# PlatformIO integration - Import is used when run as PlatformIO script
+try:
+    Import("env")
+    PLATFORMIO_MODE = True
+    # In PlatformIO mode, get project dir from env
+    PROJECT_DIR = Path(env.subst("$PROJECT_DIR"))
+except:
+    PLATFORMIO_MODE = False
+    PROJECT_DIR = None
 
 
 def get_git_info(project_root):
@@ -37,10 +46,11 @@ def get_git_info(project_root):
         return "unknown", False
 
 
-def main():
+def generate_version(project_root=None):
     # Find project root (where library.json lives)
-    script_dir = Path(__file__).parent
-    project_root = script_dir.parent
+    if project_root is None:
+        script_dir = Path(__file__).parent
+        project_root = script_dir.parent
     
     library_json = project_root / "library.json"
     version_h = project_root / "include" / "SystemChrono" / "Version.h"
@@ -130,5 +140,10 @@ static constexpr const char* VERSION_FULL = "{version} ({git_commit}, {build_tim
     print(f"Generated {version_h} with version {version}")
 
 
+# PlatformIO hook - run when imported as extra_script
+if PLATFORMIO_MODE:
+    generate_version(PROJECT_DIR)
+
+# Standalone execution
 if __name__ == "__main__":
-    main()
+    generate_version()

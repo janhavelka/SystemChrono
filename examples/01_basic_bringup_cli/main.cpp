@@ -31,8 +31,8 @@ static Stopwatch g_stopwatch;
  */
 static String readLine() {
   static String buffer;
-  while (Serial.available()) {
-    const char c = static_cast<char>(Serial.read());
+  while (LOG_SERIAL.available()) {
+    const char c = static_cast<char>(LOG_SERIAL.read());
     if (c == '\r') {
       continue;
     }
@@ -52,33 +52,33 @@ static String readLine() {
  * @brief Print available commands.
  */
 static void printHelp() {
-  Serial.println();
-  Serial.println(F("=== SystemChrono CLI ==="));
-  Serial.print(F("Version: "));
-  Serial.println(SystemChrono::VERSION);
-  Serial.print(F("Built:   "));
-  Serial.println(SystemChrono::BUILD_TIMESTAMP);
-  Serial.print(F("Commit:  "));
-  Serial.print(SystemChrono::GIT_COMMIT);
-  Serial.print(F(" ("));
-  Serial.print(SystemChrono::GIT_STATUS);
-  Serial.println(F(")"));
-  Serial.println();
-  Serial.println(F("Time Commands:"));
-  Serial.println(F("  time         - Show current 64-bit time values"));
-  Serial.println(F("  format       - Show human-readable time (HH:MM:SS.mmm)"));
-  Serial.println();
-  Serial.println(F("Stopwatch Commands:"));
-  Serial.println(F("  start        - Reset and start stopwatch"));
-  Serial.println(F("  stop         - Stop stopwatch"));
-  Serial.println(F("  resume       - Resume stopwatch"));
-  Serial.println(F("  reset        - Clear stopwatch"));
-  Serial.println(F("  elapsed      - Show stopwatch elapsed time"));
-  Serial.println();
-  Serial.println(F("Other:"));
-  Serial.println(F("  measure      - Measure delayMicroseconds(50) overhead"));
-  Serial.println(F("  help         - Show this help"));
-  Serial.println();
+  LOG_SERIAL.println();
+  LOG_SERIAL.println(F("=== SystemChrono CLI ==="));
+  LOG_SERIAL.print(F("Version: "));
+  LOG_SERIAL.println(SystemChrono::VERSION);
+  LOG_SERIAL.print(F("Built:   "));
+  LOG_SERIAL.println(SystemChrono::BUILD_TIMESTAMP);
+  LOG_SERIAL.print(F("Commit:  "));
+  LOG_SERIAL.print(SystemChrono::GIT_COMMIT);
+  LOG_SERIAL.print(F(" ("));
+  LOG_SERIAL.print(SystemChrono::GIT_STATUS);
+  LOG_SERIAL.println(F(")"));
+  LOG_SERIAL.println();
+  LOG_SERIAL.println(F("Time Commands:"));
+  LOG_SERIAL.println(F("  time         - Show current 64-bit time values"));
+  LOG_SERIAL.println(F("  format       - Show human-readable time (HH:MM:SS.mmm)"));
+  LOG_SERIAL.println();
+  LOG_SERIAL.println(F("Stopwatch Commands:"));
+  LOG_SERIAL.println(F("  start        - Reset and start stopwatch"));
+  LOG_SERIAL.println(F("  stop         - Stop stopwatch"));
+  LOG_SERIAL.println(F("  resume       - Resume stopwatch"));
+  LOG_SERIAL.println(F("  reset        - Clear stopwatch"));
+  LOG_SERIAL.println(F("  elapsed      - Show stopwatch elapsed time"));
+  LOG_SERIAL.println();
+  LOG_SERIAL.println(F("Other:"));
+  LOG_SERIAL.println(F("  measure      - Measure delayMicroseconds(50) overhead"));
+  LOG_SERIAL.println(F("  help         - Show this help"));
+  LOG_SERIAL.println();
 }
 
 /**
@@ -203,7 +203,7 @@ void setup() {
   g_stopwatch.start();
 
   printHelp();
-  Serial.println(F("Ready. Type a command:"));
+  LOG_SERIAL.println(F("Ready. Type a command:"));
 }
 
 void loop() {
