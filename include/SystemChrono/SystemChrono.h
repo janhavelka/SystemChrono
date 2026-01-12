@@ -15,10 +15,65 @@
 
 #pragma once
 
-#include <Arduino.h>
-#include <stdint.h>
+#if defined(ARDUINO)
+  #include <Arduino.h>
+#elif defined(SYSTEMCHRONO_HOST_TEST)
+  #include <stdint.h>
+  #include <string>
+
+class String {
+ public:
+  String() = default;
+  explicit String(const char* s) : _s(s ? s : "") {}
+  const char* c_str() const { return _s.c_str(); }
+
+ private:
+  std::string _s;
+};
+#else
+  #error "SystemChrono: this library currently supports Arduino builds only."
+#endif
+
+#include <stddef.h>
+
+#include "SystemChrono/Config.h"
+#include "SystemChrono/Status.h"
 
 namespace SystemChrono {
+
+// ===========================================================================
+// Constants
+// ===========================================================================
+
+/// @brief Minimum buffer size for formatted time strings (including null).
+static constexpr size_t kFormatTimeBufferSize = 32;
+
+// ===========================================================================
+// Lifecycle (optional)
+// ===========================================================================
+
+/**
+ * @brief Initialize SystemChrono.
+ * @param config Configuration parameters (currently unused).
+ * @return Ok on success.
+ * @note Optional. All time functions work without calling begin().
+ * @note Performs a single time read to prime wrap tracking on non-ESP32.
+ */
+Status begin(const Config& config);
+
+/**
+ * @brief Cooperative service hook for rollover tracking.
+ * @param now_ms Current time in milliseconds (unused; reserved).
+ * @note Optional. Call periodically if no other SystemChrono calls occur.
+ * @note On non-ESP32, calling at least once per ~60 minutes avoids wrap gaps.
+ */
+void tick(uint32_t now_ms);
+
+/**
+ * @brief Cleanup and release resources.
+ * @note Optional. No resources are currently allocated.
+ */
+void end();
 
 // ===========================================================================
 // Global 64-bit Time Accessors
@@ -80,11 +135,34 @@ int64_t secondsSince(int64_t startS);
 // ===========================================================================
 
 /**
+ * @brief Format microseconds as HH:MM:SS.mmm into a user buffer.
+ * @param microsSinceBoot Timestamp in microseconds.
+ * @param buffer Output buffer for formatted string.
+ * @param bufferSize Size of buffer in bytes.
+ * @return Ok on success, INVALID_CONFIG if buffer is null or too small.
+ *
+ * @note Requires bufferSize >= kFormatTimeBufferSize.
+ * @note No heap allocation.
+ */
+Status formatTimeToBuffer(int64_t microsSinceBoot, char* buffer, size_t bufferSize);
+
+/**
+ * @brief Format current time as HH:MM:SS.mmm into a user buffer.
+ * @param buffer Output buffer for formatted string.
+ * @param bufferSize Size of buffer in bytes.
+ * @return Ok on success, INVALID_CONFIG if buffer is null or too small.
+ *
+ * @note Requires bufferSize >= kFormatTimeBufferSize.
+ * @note No heap allocation.
+ */
+Status formatNowToBuffer(char* buffer, size_t bufferSize);
+
+/**
  * @brief Format microseconds as HH:MM:SS.mmm string.
  * @param microsSinceBoot Timestamp in microseconds.
  * @return Formatted string (e.g., "01:23:45.678").
  *
- * @note Returns String object. For embedded use, consider fixed-size buffers.
+ * @note Returns String object (allocates). Use formatTimeToBuffer() to avoid heap.
  * @note Handles negative values with leading minus sign.
  */
 String formatTime(int64_t microsSinceBoot);

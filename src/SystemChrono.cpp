@@ -7,22 +7,37 @@
 
 #include <stdio.h>
 
-#if !defined(ARDUINO)
+#if !defined(ARDUINO) && !defined(SYSTEMCHRONO_HOST_TEST)
   #error "SystemChrono: this library currently supports Arduino builds only."
 #endif
 
 #if defined(ARDUINO_ARCH_ESP32)
   #include "esp_timer.h"
+#elif defined(SYSTEMCHRONO_HOST_TEST)
+  #include <chrono>
 #endif
 
 namespace SystemChrono {
+
+// ===========================================================================
+// Internal State
+// ===========================================================================
+
+static Config g_config;
 
 // ===========================================================================
 // Internal: Platform microsecond source
 // ===========================================================================
 
 static inline int64_t micros64Impl() {
-#if defined(ARDUINO_ARCH_ESP32)
+#if defined(SYSTEMCHRONO_HOST_TEST)
+  using clock = std::chrono::steady_clock;
+  static const clock::time_point start = clock::now();
+  const clock::time_point now = clock::now();
+  const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - start);
+  return static_cast<int64_t>(elapsed.count());
+
+#elif defined(ARDUINO_ARCH_ESP32)
   // ESP32: monotonic microseconds since boot
   return static_cast<int64_t>(esp_timer_get_time());
 
@@ -46,6 +61,27 @@ static inline int64_t micros64Impl() {
 #else
   #error "SystemChrono: unsupported platform."
 #endif
+}
+
+// ===========================================================================
+// Lifecycle
+// ===========================================================================
+
+Status begin(const Config& config) {
+  g_config = config;
+  (void)micros64Impl();
+  return Ok();
+}
+
+void tick(uint32_t now_ms) {
+  (void)now_ms;
+#if !defined(ARDUINO_ARCH_ESP32)
+  (void)micros64Impl();
+#endif
+}
+
+void end() {
+  // No resources to release. Reserved for future use.
 }
 
 // ===========================================================================
@@ -77,6 +113,26 @@ int64_t secondsSince(int64_t startS) {
 }
 
 String formatTime(int64_t microsSinceBoot) {
+  char buf[kFormatTimeBufferSize];
+  const Status st = formatTimeToBuffer(microsSinceBoot, buf, sizeof(buf));
+  if (!st.ok()) {
+    return String("");
+  }
+  return String(buf);
+}
+
+String formatNow() {
+  return formatTime(micros64());
+}
+
+Status formatTimeToBuffer(int64_t microsSinceBoot, char* buffer, size_t bufferSize) {
+  if (buffer == nullptr) {
+    return Status(Err::INVALID_CONFIG, 0, "buffer null");
+  }
+  if (bufferSize < kFormatTimeBufferSize) {
+    return Status(Err::INVALID_CONFIG, 0, "buffer too small");
+  }
+
   int64_t totalMs = microsSinceBoot / 1000LL;
   bool negative = totalMs < 0;
   if (negative) {
@@ -88,18 +144,20 @@ String formatTime(int64_t microsSinceBoot) {
   int64_t seconds = (totalMs / 1000LL) % 60LL;
   int64_t millis = totalMs % 1000LL;
 
-  char buf[32];
-  snprintf(buf, sizeof(buf), "%s%lld:%02lld:%02lld.%03lld",
-           negative ? "-" : "",
-           static_cast<long long>(hours),
-           static_cast<long long>(minutes),
-           static_cast<long long>(seconds),
-           static_cast<long long>(millis));
-  return String(buf);
+  int written = snprintf(buffer, bufferSize, "%s%lld:%02lld:%02lld.%03lld",
+                         negative ? "-" : "",
+                         static_cast<long long>(hours),
+                         static_cast<long long>(minutes),
+                         static_cast<long long>(seconds),
+                         static_cast<long long>(millis));
+  if (written < 0 || static_cast<size_t>(written) >= bufferSize) {
+    return Status(Err::INTERNAL_ERROR, 0, "format failed");
+  }
+  return Ok();
 }
 
-String formatNow() {
-  return formatTime(micros64());
+Status formatNowToBuffer(char* buffer, size_t bufferSize) {
+  return formatTimeToBuffer(micros64(), buffer, bufferSize);
 }
 
 // ===========================================================================

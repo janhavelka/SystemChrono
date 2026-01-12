@@ -1,4 +1,4 @@
-# SystemChrono
+﻿# SystemChrono
 
 64-bit monotonic time helpers for Arduino, using `esp_timer_get_time()` on ESP32 and rollover-tracked `micros()` elsewhere.
 
@@ -10,7 +10,9 @@
 - **Elapsed helpers:** `microsSince()`, `millisSince()`, `secondsSince()` for interval checks
 - **Elapsed timer classes:** `ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64` for non-blocking intervals
 - **Stopwatch:** Start/stop/resume/reset with microsecond precision
-- **Human-readable formatting:** `formatTime()`, `formatNow()` → `HH:MM:SS.mmm`
+- **Human-readable formatting:** `formatTime()`, `formatNow()` for `HH:MM:SS.mmm`
+- **No-heap formatting:** `formatTimeToBuffer()`, `formatNowToBuffer()` with `kFormatTimeBufferSize`
+- **Standard lifecycle hooks:** `begin()`, `tick()`, `end()` (optional)
 - **ESP32 optimized:** Uses `esp_timer_get_time()` for true 64-bit monotonic time
 - **Arduino compatible:** Falls back to wrap-tracked `micros()` on other platforms
 
@@ -52,6 +54,26 @@ void loop() {
   
   Serial.printf("micros=%lld millis=%lld seconds=%lld\n",
                 (long long)us, (long long)ms, (long long)s);
+}
+```
+
+### Lifecycle (optional)
+
+```cpp
+#include "SystemChrono/SystemChrono.h"
+
+using namespace SystemChrono;
+
+void setup() {
+  Config config;
+  Status st = begin(config);
+  if (!st.ok()) {
+    // handle error
+  }
+}
+
+void loop() {
+  tick(static_cast<uint32_t>(millis()));  // Optional rollover priming
 }
 ```
 
@@ -101,16 +123,27 @@ using namespace SystemChrono;
 
 void printUptime() {
   // Current time since boot: "01:23:45.678"
-  Serial.println(formatNow());
+  char buf[kFormatTimeBufferSize];
+  if (formatNowToBuffer(buf, sizeof(buf)).ok()) {
+    Serial.println(buf);
+  }
   
-  // Format arbitrary timestamp
+  // Convenience helper (allocates)
   Serial.println(formatTime(sw.elapsedMicros()));
 }
 ```
 
 ## API Reference
 
-### Free Functions
+### Lifecycle
+
+| Function                          | Description                                    |
+| --------------------------------- | ---------------------------------------------- |
+| `Status begin(const Config&)`     | Optional initialization                         |
+| `void tick(uint32_t)`             | Optional rollover service hook                  |
+| `void end()`                      | Optional cleanup                                |
+
+### Time Functions
 
 | Function                          | Description                                    |
 | --------------------------------- | ---------------------------------------------- |
@@ -120,8 +153,21 @@ void printUptime() {
 | `int64_t microsSince(int64_t)`    | Elapsed microseconds since timestamp           |
 | `int64_t millisSince(int64_t)`    | Elapsed milliseconds since timestamp           |
 | `int64_t secondsSince(int64_t)`   | Elapsed seconds since timestamp                |
-| `String formatTime(int64_t)`      | Format microseconds as `HH:MM:SS.mmm`          |
-| `String formatNow()`              | Format current time as `HH:MM:SS.mmm`          |
+
+### Formatting Functions
+
+| Function                                        | Description                                       |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `Status formatTimeToBuffer(int64_t, char*, size_t)` | Format `HH:MM:SS.mmm` without heap allocation   |
+| `Status formatNowToBuffer(char*, size_t)`       | Format current time without heap allocation       |
+| `String formatTime(int64_t)`                    | Format `HH:MM:SS.mmm` (allocates)                 |
+| `String formatNow()`                            | Format current time (allocates)                   |
+
+### Constants
+
+| Constant                         | Description                                    |
+| -------------------------------- | ---------------------------------------------- |
+| `kFormatTimeBufferSize`          | Minimum buffer size for formatted time strings |
 
 ### Stopwatch Class
 
@@ -151,9 +197,9 @@ The library version is defined in [library.json](library.json). A pre-build scri
 ```cpp
 #include "SystemChrono/Version.h"
 
-Serial.println(SystemChrono::VERSION);           // "1.0.1"
-Serial.println(SystemChrono::VERSION_FULL);      // "1.0.1 (a1b2c3d, 2026-01-10 15:30:00)"
-Serial.println(SystemChrono::BUILD_TIMESTAMP);   // "2026-01-10 15:30:00"
+Serial.println(SystemChrono::VERSION);           // "2.0.0"
+Serial.println(SystemChrono::VERSION_FULL);      // "2.0.0 (a1b2c3d, 2026-01-12 15:30:00)"
+Serial.println(SystemChrono::BUILD_TIMESTAMP);   // "2026-01-12 15:30:00"
 Serial.println(SystemChrono::GIT_COMMIT);        // "a1b2c3d"
 ```
 
@@ -175,38 +221,58 @@ pio run -e cli_esp32s2 -t upload
 pio device monitor -e cli_esp32s2
 ```
 
-## Threading & Timing Model
+## Testing
 
-- **Single-threaded:** All functions safe to call from main loop
-- **Non-blocking:** No delays or waits
-- **ISR safety (ESP32):** `micros64()` uses `esp_timer_get_time()` which is ISR-safe
-- **ISR safety (other):** Uses `noInterrupts()`/`interrupts()` briefly for wrap tracking
+```bash
+# Native host tests
+pio test -e test_native
+```
+
+## Behavioral Contracts
+
+### Threading Model
+Single-threaded by default. Optional task mode via Config is not applicable for this library.
+
+### Timing
+`tick()` completes in <1ms and does bounded work. No long operations or waits.
+
+### Resource Ownership
+No hardware resources are owned. No hardcoded pins or peripherals.
+
+### Memory
+All allocation (if any in the future) occurs in begin(). Zero allocation in tick(). String helpers allocate; use buffer APIs for zero-heap formatting.
+
+### Error Handling
+All fallible APIs return Status. No silent failures.
 
 ## Platform Notes
 
 ### ESP32
-Uses `esp_timer_get_time()` for true 64-bit monotonic microseconds since boot. Thread-safe.
+Uses `esp_timer_get_time()` for true 64-bit monotonic microseconds since boot. Thread-safe and ISR-safe.
 
 ### Other Arduino Platforms
-Extends 32-bit `micros()` to 64-bit via wrap tracking. Requires periodic calls (at least once per ~70 minutes) to detect rollovers. Uses interrupt-disable briefly when reading.
+Extends 32-bit `micros()` to 64-bit via wrap tracking. Requires periodic calls (at least once per ~70 minutes) to detect rollovers; calling any time accessor or `tick()` is sufficient. Uses interrupt-disable briefly when reading.
 
 ## Project Structure
 
 ```
-├── include/SystemChrono/  # Public headers (library API)
-│   ├── Config.h          # Configuration struct (reserved)
-│   ├── Status.h          # Error types
-│   ├── SystemChrono.h    # Main API header
-│   └── Version.h         # Auto-generated version info
-├── src/                  # Implementation
-│   └── SystemChrono.cpp
-├── examples/
-│   ├── 01_basic_bringup_cli/  # CLI demo
-│   └── common/           # Shared example utilities
-├── library.json          # PlatformIO library metadata
-└── platformio.ini        # Build environments
+include/SystemChrono/  # Public headers (library API)
+  Config.h          # Configuration struct (reserved)
+  Status.h          # Error types
+  SystemChrono.h    # Main API header
+  Version.h         # Auto-generated version info
+src/                  # Implementation
+  SystemChrono.cpp
+examples/
+  01_basic_bringup_cli/  # CLI demo
+  common/           # Shared example utilities
+scripts/
+  generate_version.py
+test/
+  native/
+library.json          # PlatformIO library metadata
+platformio.ini        # Build environments
 ```
-
 ## Versioning Policy
 
 This project follows [Semantic Versioning 2.0.0](https://semver.org/):
@@ -228,3 +294,6 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [SECURITY.md](SECURITY.md) - Security policy
 - [AGENTS.md](AGENTS.md) - AI agent guidelines
+
+
+

@@ -94,7 +94,13 @@ static void cmdTime() {
  * @brief Handle 'format' command - show formatted time.
  */
 static void cmdFormat() {
-  LOGI("Current time: %s", formatNow().c_str());
+  char buf[SystemChrono::kFormatTimeBufferSize];
+  const Status st = formatNowToBuffer(buf, sizeof(buf));
+  if (!st.ok()) {
+    LOGE("formatNowToBuffer failed: %s", st.msg);
+    return;
+  }
+  LOGI("Current time: %s", buf);
 }
 
 /**
@@ -133,9 +139,15 @@ static void cmdReset() {
  * @brief Handle 'elapsed' command.
  */
 static void cmdElapsed() {
+  char buf[SystemChrono::kFormatTimeBufferSize];
+  const Status st = formatTimeToBuffer(g_stopwatch.elapsedMicros(), buf, sizeof(buf));
+  if (!st.ok()) {
+    LOGE("formatTimeToBuffer failed: %s", st.msg);
+    return;
+  }
   LOGI("Stopwatch: %lld ms (%s) [%s]",
        static_cast<long long>(g_stopwatch.elapsedMillis()),
-       formatTime(g_stopwatch.elapsedMicros()).c_str(),
+       buf,
        g_stopwatch.isRunning() ? "running" : "stopped");
 }
 
@@ -181,6 +193,12 @@ void setup() {
   log_begin(115200);
   delay(100);  // Allow USB CDC to initialize
 
+  const Config config;
+  const Status st = SystemChrono::begin(config);
+  if (!st.ok()) {
+    LOGE("SystemChrono begin failed: %s", st.msg);
+  }
+
   // Initialize stopwatch
   g_stopwatch.start();
 
@@ -189,13 +207,23 @@ void setup() {
 }
 
 void loop() {
+  SystemChrono::tick(static_cast<uint32_t>(millis()));
+
   // Periodic heartbeat output (every 5 seconds)
   if (g_heartbeat >= 5000) {
     g_heartbeat = 0;
-    LOGI("Uptime: %s | Stopwatch: %lld ms [%s]",
-         formatNow().c_str(),
-         static_cast<long long>(g_stopwatch.elapsedMillis()),
-         g_stopwatch.isRunning() ? "running" : "stopped");
+    char buf[SystemChrono::kFormatTimeBufferSize];
+    const Status st = formatNowToBuffer(buf, sizeof(buf));
+    if (st.ok()) {
+      LOGI("Uptime: %s | Stopwatch: %lld ms [%s]",
+           buf,
+           static_cast<long long>(g_stopwatch.elapsedMillis()),
+           g_stopwatch.isRunning() ? "running" : "stopped");
+    } else {
+      LOGI("Stopwatch: %lld ms [%s]",
+           static_cast<long long>(g_stopwatch.elapsedMillis()),
+           g_stopwatch.isRunning() ? "running" : "stopped");
+    }
   }
 
   // Non-blocking command processing
