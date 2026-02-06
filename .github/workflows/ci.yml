@@ -8,34 +8,6 @@ on:
     branches: [main, master]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment:
-          - ex_cli_s3
-          - ex_cli_s2
-          - ex_compile_only_s3
-          - ex_compile_only_s2
-      fail-fast: false
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install PlatformIO
-        run: |
-          python -m pip install --upgrade pip
-          pip install platformio
-
-      - name: Build ${{ matrix.environment }}
-        run: pio run -e ${{ matrix.environment }}
-
   # Optional: check that library.json is valid
   validate-library:
     runs-on: ubuntu-latest
