@@ -14,7 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `Stopwatch::running()` to `Stopwatch::isRunning()` for consistency
 - Added comprehensive Doxygen documentation
 
-## [1.0.1] - 2026-01-10
+## [1.0.1] - 2026-02-06
+
+### Changed
+- Updated LICENSE copyright notice
 
 ### Fixed
 - Minor documentation updates
