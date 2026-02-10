@@ -157,9 +157,9 @@ The library version is defined in [library.json](library.json). A pre-build scri
 ```cpp
 #include "SystemChrono/Version.h"
 
-Serial.println(SystemChrono::VERSION);           // "1.0.1"
-Serial.println(SystemChrono::VERSION_FULL);      // "1.0.1 (a1b2c3d, 2026-01-10 15:30:00)"
-Serial.println(SystemChrono::BUILD_TIMESTAMP);   // "2026-01-10 15:30:00"
+Serial.println(SystemChrono::VERSION);           // "1.1.0"
+Serial.println(SystemChrono::VERSION_FULL);      // "1.1.0 (a1b2c3d, 2026-02-10 15:30:00)"
+Serial.println(SystemChrono::BUILD_TIMESTAMP);   // "2026-02-10 15:30:00"
 Serial.println(SystemChrono::GIT_COMMIT);        // "a1b2c3d"
 ```
 
