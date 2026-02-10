@@ -94,7 +94,16 @@ static void cmdTime() {
  * @brief Handle 'format' command - show formatted time.
  */
 static void cmdFormat() {
-  LOGI("Current time: %s", formatNow().c_str());
+  char timeBuf[TIME_FORMAT_BUFFER_SIZE];
+  const Status status = formatNowTo(timeBuf, sizeof(timeBuf));
+  if (!status.ok()) {
+    LOGE("formatNowTo failed: %s (code=%d, detail=%ld)",
+         status.msg,
+         static_cast<int>(status.code),
+         static_cast<long>(status.detail));
+    return;
+  }
+  LOGI("Current time: %s", timeBuf);
 }
 
 /**
@@ -133,9 +142,19 @@ static void cmdReset() {
  * @brief Handle 'elapsed' command.
  */
 static void cmdElapsed() {
+  char elapsedBuf[TIME_FORMAT_BUFFER_SIZE];
+  const Status status = formatTimeTo(g_stopwatch.elapsedMicros(), elapsedBuf, sizeof(elapsedBuf));
+  if (!status.ok()) {
+    LOGE("formatTimeTo failed: %s (code=%d, detail=%ld)",
+         status.msg,
+         static_cast<int>(status.code),
+         static_cast<long>(status.detail));
+    return;
+  }
+
   LOGI("Stopwatch: %lld ms (%s) [%s]",
        static_cast<long long>(g_stopwatch.elapsedMillis()),
-       formatTime(g_stopwatch.elapsedMicros()).c_str(),
+       elapsedBuf,
        g_stopwatch.isRunning() ? "running" : "stopped");
 }
 
@@ -192,8 +211,18 @@ void loop() {
   // Periodic heartbeat output (every 5 seconds)
   if (g_heartbeat >= 5000) {
     g_heartbeat = 0;
+    char uptimeBuf[TIME_FORMAT_BUFFER_SIZE];
+    const Status status = formatNowTo(uptimeBuf, sizeof(uptimeBuf));
+    if (!status.ok()) {
+      LOGE("formatNowTo failed: %s (code=%d, detail=%ld)",
+           status.msg,
+           static_cast<int>(status.code),
+           static_cast<long>(status.detail));
+      return;
+    }
+
     LOGI("Uptime: %s | Stopwatch: %lld ms [%s]",
-         formatNow().c_str(),
+         uptimeBuf,
          static_cast<long long>(g_stopwatch.elapsedMillis()),
          g_stopwatch.isRunning() ? "running" : "stopped");
   }

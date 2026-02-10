@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `Stopwatch::running()` to `Stopwatch::isRunning()` for consistency
 - Added comprehensive Doxygen documentation
 
+### Added
+- Allocation-free formatting APIs: `formatTimeTo()` and `formatNowTo()`
+- `TIME_FORMAT_BUFFER_SIZE` constant for deterministic caller buffer sizing
+
+### Fixed
+- Eliminated undefined signed-overflow behavior in elapsed timer arithmetic via saturating math
+- Hardened time formatting for extreme negative values (including `INT64_MIN`)
+- Fixed PlatformIO pre-build version generation so `Version.h` is created during builds
+
 ## [1.0.1] - 2026-02-06
 
 ### Changed

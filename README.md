@@ -10,7 +10,7 @@
 - **Elapsed helpers:** `microsSince()`, `millisSince()`, `secondsSince()` for interval checks
 - **Elapsed timer classes:** `ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64` for non-blocking intervals
 - **Stopwatch:** Start/stop/resume/reset with microsecond precision
-- **Human-readable formatting:** `formatTime()`, `formatNow()` → `HH:MM:SS.mmm`
+- **Human-readable formatting:** allocation-free `formatTimeTo()` / `formatNowTo()` plus String wrappers
 - **ESP32 optimized:** Uses `esp_timer_get_time()` for true 64-bit monotonic time
 - **Arduino compatible:** Falls back to wrap-tracked `micros()` on other platforms
 
@@ -100,11 +100,15 @@ void measureSomething() {
 using namespace SystemChrono;
 
 void printUptime() {
-  // Current time since boot: "01:23:45.678"
+  char timeBuf[TIME_FORMAT_BUFFER_SIZE];
+
+  // Deterministic, allocation-free formatting (recommended in production)
+  if (formatNowTo(timeBuf, sizeof(timeBuf)).ok()) {
+    Serial.println(timeBuf);
+  }
+
+  // String wrappers remain available for convenience
   Serial.println(formatNow());
-  
-  // Format arbitrary timestamp
-  Serial.println(formatTime(sw.elapsedMicros()));
 }
 ```
 
@@ -120,6 +124,8 @@ void printUptime() {
 | `int64_t microsSince(int64_t)`    | Elapsed microseconds since timestamp           |
 | `int64_t millisSince(int64_t)`    | Elapsed milliseconds since timestamp           |
 | `int64_t secondsSince(int64_t)`   | Elapsed seconds since timestamp                |
+| `Status formatTimeTo(int64_t, char*, size_t)` | Allocation-free format into caller buffer |
+| `Status formatNowTo(char*, size_t)` | Allocation-free format into caller buffer    |
 | `String formatTime(int64_t)`      | Format microseconds as `HH:MM:SS.mmm`          |
 | `String formatNow()`              | Format current time as `HH:MM:SS.mmm`          |
 
@@ -181,6 +187,23 @@ pio device monitor -e cli_esp32s2
 - **Non-blocking:** No delays or waits
 - **ISR safety (ESP32):** `micros64()` uses `esp_timer_get_time()` which is ISR-safe
 - **ISR safety (other):** Uses `noInterrupts()`/`interrupts()` briefly for wrap tracking
+
+## Resource Ownership
+
+- No pins, buses, tasks, or peripherals are owned by this library
+- Time source is platform-provided (`esp_timer_get_time()` or `micros()`)
+- No hidden storage or NVS side effects
+
+## Memory
+
+- No heap allocations in `micros64()`, elapsed helpers, `Stopwatch`, or elapsed timer classes
+- `formatTimeTo()` and `formatNowTo()` are allocation-free
+- `formatTime()` and `formatNow()` return `String` and may allocate heap memory
+
+## Error Handling
+
+- Allocation-free formatting APIs return `Status` and never fail silently
+- Invalid formatting buffer configuration returns `Err::INVALID_CONFIG`
 
 ## Platform Notes
 

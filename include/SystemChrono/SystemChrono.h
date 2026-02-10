@@ -18,6 +18,8 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+#include "SystemChrono/Status.h"
+
 namespace SystemChrono {
 
 // ===========================================================================
@@ -80,11 +82,43 @@ int64_t secondsSince(int64_t startS);
 // ===========================================================================
 
 /**
+ * @brief Minimum buffer size for time formatting functions.
+ *
+ * This size guarantees enough room for the longest supported
+ * `[-]HHHHHHHHHHHHH:MM:SS.mmm` representation plus null terminator.
+ */
+static constexpr size_t TIME_FORMAT_BUFFER_SIZE = 32U;
+
+/**
+ * @brief Format microseconds as HH:MM:SS.mmm into caller-provided buffer.
+ * @param microsSinceBoot Timestamp in microseconds.
+ * @param out Output buffer for null-terminated formatted string.
+ * @param outLen Size of output buffer in bytes.
+ * @return OK on success.
+ * @return INVALID_CONFIG if `out` is null, `outLen == 0`, or buffer too small.
+ *
+ * @note Deterministic and allocation-free. Preferred for production firmware.
+ */
+Status formatTimeTo(int64_t microsSinceBoot, char* out, size_t outLen);
+
+/**
+ * @brief Format current time as HH:MM:SS.mmm into caller-provided buffer.
+ * @param out Output buffer for null-terminated formatted string.
+ * @param outLen Size of output buffer in bytes.
+ * @return OK on success.
+ * @return INVALID_CONFIG if `out` is null, `outLen == 0`, or buffer too small.
+ *
+ * @note Deterministic and allocation-free. Preferred for production firmware.
+ */
+Status formatNowTo(char* out, size_t outLen);
+
+/**
  * @brief Format microseconds as HH:MM:SS.mmm string.
  * @param microsSinceBoot Timestamp in microseconds.
  * @return Formatted string (e.g., "01:23:45.678").
  *
- * @note Returns String object. For embedded use, consider fixed-size buffers.
+ * @note Returns String object (heap allocation possible).
+ * @note For deterministic memory usage, prefer formatTimeTo().
  * @note Handles negative values with leading minus sign.
  */
 String formatTime(int64_t microsSinceBoot);
@@ -92,6 +126,8 @@ String formatTime(int64_t microsSinceBoot);
 /**
  * @brief Format current time as HH:MM:SS.mmm string.
  * @return Formatted string of current time since boot.
+ * @note Returns String object (heap allocation possible).
+ * @note For deterministic memory usage, prefer formatNowTo().
  */
 String formatNow();
 
