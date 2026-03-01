@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-01
+
+### Changed
+- Unified bringup CLI and shared log output style for consistent diagnostics across repositories.
+- Refreshed version metadata export in public headers.
+
 ## [1.1.0] - 2026-02-10
 
 ### Changed
@@ -45,7 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ESP32 optimized using `esp_timer_get_time()`
 - Generic Arduino support with wrap-tracked `micros()`
 
-[Unreleased]: https://github.com/janhavelka/SystemChrono/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/janhavelka/SystemChrono/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/janhavelka/SystemChrono/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/janhavelka/SystemChrono/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/janhavelka/SystemChrono/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/janhavelka/SystemChrono/releases/tag/v1.0.0

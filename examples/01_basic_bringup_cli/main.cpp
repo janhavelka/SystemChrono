@@ -25,6 +25,18 @@ static ElapsedMillis64 g_heartbeat(0);
 static ElapsedMicros64 g_measurement(0);
 static Stopwatch g_stopwatch;
 
+static void printHelpSection(const char* title) {
+  Serial.printf("%s[%s]%s\n", LOG_COLOR_GREEN, title, LOG_COLOR_RESET);
+}
+
+static void printHelpItem(const char* cmd, const char* desc) {
+  Serial.printf("  %s%-16s%s - %s\n", LOG_COLOR_CYAN, cmd, LOG_COLOR_RESET, desc);
+}
+
+static const char* runStateColor(bool running) {
+  return running ? LOG_COLOR_GREEN : LOG_COLOR_YELLOW;
+}
+
 /**
  * @brief Non-blocking line reader from Serial.
  * @return Complete line (without newline) or empty string if incomplete.
@@ -53,7 +65,7 @@ static String readLine() {
  */
 static void printHelp() {
   Serial.println();
-  Serial.println(F("=== SystemChrono CLI ==="));
+  Serial.printf("%s=== SystemChrono CLI Help ===%s\n", LOG_COLOR_CYAN, LOG_COLOR_RESET);
   Serial.print(F("Version: "));
   Serial.println(SystemChrono::VERSION);
   Serial.print(F("Built:   "));
@@ -64,20 +76,20 @@ static void printHelp() {
   Serial.print(SystemChrono::GIT_STATUS);
   Serial.println(F(")"));
   Serial.println();
-  Serial.println(F("Time Commands:"));
-  Serial.println(F("  time         - Show current 64-bit time values"));
-  Serial.println(F("  format       - Show human-readable time (HH:MM:SS.mmm)"));
+  printHelpSection("Common");
+  printHelpItem("help", "Show this help");
   Serial.println();
-  Serial.println(F("Stopwatch Commands:"));
-  Serial.println(F("  start        - Reset and start stopwatch"));
-  Serial.println(F("  stop         - Stop stopwatch"));
-  Serial.println(F("  resume       - Resume stopwatch"));
-  Serial.println(F("  reset        - Clear stopwatch"));
-  Serial.println(F("  elapsed      - Show stopwatch elapsed time"));
+  printHelpSection("Time");
+  printHelpItem("time", "Show current 64-bit time values");
+  printHelpItem("format", "Show human-readable time (HH:MM:SS.mmm)");
+  printHelpItem("measure", "Measure delayMicroseconds(50) overhead");
   Serial.println();
-  Serial.println(F("Other:"));
-  Serial.println(F("  measure      - Measure delayMicroseconds(50) overhead"));
-  Serial.println(F("  help         - Show this help"));
+  printHelpSection("Stopwatch");
+  printHelpItem("start", "Reset and start stopwatch");
+  printHelpItem("stop", "Stop stopwatch");
+  printHelpItem("resume", "Resume stopwatch");
+  printHelpItem("reset", "Clear stopwatch");
+  printHelpItem("elapsed", "Show stopwatch elapsed time");
   Serial.println();
 }
 
@@ -152,10 +164,15 @@ static void cmdElapsed() {
     return;
   }
 
+  const bool running = g_stopwatch.isRunning();
   LOGI("Stopwatch: %lld ms (%s) [%s]",
        static_cast<long long>(g_stopwatch.elapsedMillis()),
        elapsedBuf,
-       g_stopwatch.isRunning() ? "running" : "stopped");
+       running ? "running" : "stopped");
+  Serial.printf("  State: %s%s%s\n",
+                runStateColor(running),
+                running ? "running" : "stopped",
+                LOG_COLOR_RESET);
 }
 
 /**
