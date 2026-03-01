@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2026-03-01
 
+### Added
+- CLI commands `stamp` / `since` demonstrating `microsSince()`, `millisSince()`, `secondsSince()`.
+- CLI command `uptime` demonstrating `ElapsedSeconds64` and `formatTime()` (String variant).
+
 ### Changed
 - Unified bringup CLI and shared log output style for consistent diagnostics across repositories.
 - Refreshed version metadata export in public headers.
+- Heartbeat log now includes uptime seconds from `ElapsedSeconds64`.
 
 ## [1.1.0] - 2026-02-10
 

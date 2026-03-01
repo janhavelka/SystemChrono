@@ -4,9 +4,10 @@
  *
  * Demonstrates all SystemChrono features with serial commands:
  * - 64-bit time accessors (micros64, millis64, seconds64)
+ * - Elapsed helpers (microsSince, millisSince, secondsSince)
  * - Elapsed timer classes (ElapsedMicros64, ElapsedMillis64, ElapsedSeconds64)
  * - Stopwatch with start/stop/resume/reset
- * - Human-readable time formatting
+ * - Human-readable time formatting (allocation-free and String variants)
  *
  * Type 'help' for available commands.
  */
@@ -23,7 +24,14 @@ using namespace SystemChrono;
 // Global timers and stopwatch
 static ElapsedMillis64 g_heartbeat(0);
 static ElapsedMicros64 g_measurement(0);
+static ElapsedSeconds64 g_uptime;
 static Stopwatch g_stopwatch;
+
+// Timestamp captured by 'stamp' command
+static int64_t g_stampUs  = 0;
+static int64_t g_stampMs  = 0;
+static int64_t g_stampS   = 0;
+static bool    g_hasStamp = false;
 
 static void printHelpSection(const char* title) {
   Serial.printf("%s[%s]%s\n", LOG_COLOR_GREEN, title, LOG_COLOR_RESET);
@@ -81,7 +89,10 @@ static void printHelp() {
   Serial.println();
   printHelpSection("Time");
   printHelpItem("time", "Show current 64-bit time values");
+  printHelpItem("uptime", "Show uptime (ElapsedSeconds64)");
   printHelpItem("format", "Show human-readable time (HH:MM:SS.mmm)");
+  printHelpItem("stamp", "Capture a timestamp (micros64/millis64/seconds64)");
+  printHelpItem("since", "Show elapsed since last stamp");
   printHelpItem("measure", "Measure delayMicroseconds(50) overhead");
   Serial.println();
   printHelpSection("Stopwatch");
@@ -176,6 +187,70 @@ static void cmdElapsed() {
 }
 
 /**
+ * @brief Handle 'uptime' command - show uptime via ElapsedSeconds64.
+ */
+static void cmdUptime() {
+  const int64_t secs = static_cast<int64_t>(g_uptime);
+  const int64_t hrs  = secs / 3600;
+  const int64_t mins = (secs % 3600) / 60;
+  const int64_t s    = secs % 60;
+
+  // Also show formatted version via formatTime(micros64()) (String variant)
+  const String formatted = formatTime(micros64());
+  LOGI("Uptime: %lld s (%lld:%02lld:%02lld) | formatted: %s",
+       static_cast<long long>(secs),
+       static_cast<long long>(hrs),
+       static_cast<long long>(mins),
+       static_cast<long long>(s),
+       formatted.c_str());
+}
+
+/**
+ * @brief Handle 'stamp' command - capture current timestamps.
+ */
+static void cmdStamp() {
+  g_stampUs  = micros64();
+  g_stampMs  = millis64();
+  g_stampS   = seconds64();
+  g_hasStamp = true;
+
+  char timeBuf[TIME_FORMAT_BUFFER_SIZE];
+  const Status status = formatTimeTo(g_stampUs, timeBuf, sizeof(timeBuf));
+  if (!status.ok()) {
+    LOGE("formatTimeTo failed: %s", status.msg);
+    return;
+  }
+  LOGI("Timestamp captured at %s", timeBuf);
+  LOGI("  micros64 = %lld", static_cast<long long>(g_stampUs));
+  LOGI("  millis64 = %lld", static_cast<long long>(g_stampMs));
+  LOGI("  seconds64= %lld", static_cast<long long>(g_stampS));
+}
+
+/**
+ * @brief Handle 'since' command - show elapsed since last stamp.
+ */
+static void cmdSince() {
+  if (!g_hasStamp) {
+    LOGW("No timestamp captured. Use 'stamp' first.");
+    return;
+  }
+  const int64_t elUs = microsSince(g_stampUs);
+  const int64_t elMs = millisSince(g_stampMs);
+  const int64_t elS  = secondsSince(g_stampS);
+
+  char elBuf[TIME_FORMAT_BUFFER_SIZE];
+  const Status status = formatTimeTo(elUs, elBuf, sizeof(elBuf));
+  if (!status.ok()) {
+    LOGE("formatTimeTo failed: %s", status.msg);
+    return;
+  }
+  LOGI("Elapsed since stamp: %s", elBuf);
+  LOGI("  microsSince  = %lld us", static_cast<long long>(elUs));
+  LOGI("  millisSince  = %lld ms", static_cast<long long>(elMs));
+  LOGI("  secondsSince = %lld s",  static_cast<long long>(elS));
+}
+
+/**
  * @brief Handle 'measure' command - measure timing overhead.
  */
 static void cmdMeasure() {
@@ -194,8 +269,14 @@ static void processCommand(const String& line) {
     printHelp();
   } else if (line == "time") {
     cmdTime();
+  } else if (line == "uptime") {
+    cmdUptime();
   } else if (line == "format") {
     cmdFormat();
+  } else if (line == "stamp") {
+    cmdStamp();
+  } else if (line == "since") {
+    cmdSince();
   } else if (line == "start") {
     cmdStart();
   } else if (line == "stop") {
@@ -238,8 +319,9 @@ void loop() {
       return;
     }
 
-    LOGI("Uptime: %s | Stopwatch: %lld ms [%s]",
+    LOGI("Uptime: %s (%llds) | Stopwatch: %lld ms [%s]",
          uptimeBuf,
+         static_cast<long long>(static_cast<int64_t>(g_uptime)),
          static_cast<long long>(g_stopwatch.elapsedMillis()),
          g_stopwatch.isRunning() ? "running" : "stopped");
   }
