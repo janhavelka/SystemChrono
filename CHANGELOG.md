@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Doxygen configuration for generated API documentation.
+- README instructions for local API documentation generation.
+- `Status::Ok()`, `Status::Error(...)`, free `Error(...)`, and
+  `Status::inProgress()` helpers.
+- CLI `version`, `info`, `status`, and `config` diagnostics for build metadata,
+  timer state, time source, and static formatting settings.
+
+### Changed
+- Maintainer metadata now uses the project contact address instead of a placeholder email.
+- README now keeps the AGENTS reference as plain text so generated API docs do
+  not try to resolve it as an API page.
+
 ## [1.2.0] - 2026-03-01
 
 ### Added

@@ -169,6 +169,9 @@ Serial.println(SystemChrono::GIT_COMMIT);        // "a1b2c3d"
 | ------------------------ | ------------------------------------------------ |
 | `01_basic_bringup_cli`   | Interactive CLI demonstrating all features       |
 
+Useful CLI diagnostics: `help`, `version`, `info`, `status`, and `config`.
+`config` reports the static formatting buffer size and selected time source.
+
 ### Building Examples
 
 ```bash
@@ -204,6 +207,9 @@ pio device monitor -e cli_esp32s2
 
 - Allocation-free formatting APIs return `Status` and never fail silently
 - Invalid formatting buffer configuration returns `Err::INVALID_CONFIG`
+- Use `status.ok()` for success; `Status::Ok()` / `Status::Error(...)` and free
+  `Ok()` / `Error(...)` helpers are available
+- `status.inProgress()` is reserved for transient `RESOURCE_BUSY` statuses
 
 ## Platform Notes
 
@@ -230,6 +236,16 @@ Extends 32-bit `micros()` to 64-bit via wrap tracking. Requires periodic calls (
 └── platformio.ini        # Build environments
 ```
 
+## API Documentation
+
+Doxygen configuration is provided in `Doxyfile`. Generate local API docs with:
+
+```bash
+doxygen Doxyfile
+```
+
+Generated HTML is written under `docs/doxygen/html`.
+
 ## Versioning Policy
 
 This project follows [Semantic Versioning 2.0.0](https://semver.org/):
@@ -250,4 +266,4 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [SECURITY.md](SECURITY.md) - Security policy
-- [AGENTS.md](AGENTS.md) - AI agent guidelines
+- `AGENTS.md` - AI agent guidelines
