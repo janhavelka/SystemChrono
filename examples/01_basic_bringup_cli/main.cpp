@@ -13,6 +13,7 @@
  */
 
 #include <Arduino.h>
+#include <string.h>
 
 #include "examples/common/BoardPins.h"
 #include "examples/common/Log.h"
@@ -33,6 +34,9 @@ static int64_t g_stampMs  = 0;
 static int64_t g_stampS   = 0;
 static bool    g_hasStamp = false;
 
+static char g_line[64];
+static size_t g_lineLen = 0;
+
 static void printHelpSection(const char* title) {
   Serial.printf("%s[%s]%s\n", LOG_COLOR_GREEN, title, LOG_COLOR_RESET);
 }
@@ -45,35 +49,37 @@ static const char* runStateColor(bool running) {
   return running ? LOG_COLOR_GREEN : LOG_COLOR_YELLOW;
 }
 
+static const char* timeSourceName() {
+#if defined(ARDUINO_ARCH_ESP32)
+  return "esp_timer_get_time";
+#else
+  return "micros-wrap-tracker";
+#endif
+}
+
 /**
  * @brief Non-blocking line reader from Serial.
- * @return Complete line (without newline) or empty string if incomplete.
+ * @return Complete line (without newline), or nullptr if incomplete.
  */
-static String readLine() {
-  static String buffer;
+static char* readLine() {
   while (Serial.available()) {
     const char c = static_cast<char>(Serial.read());
     if (c == '\r') {
       continue;
     }
     if (c == '\n') {
-      String result = buffer;
-      buffer = "";
-      return result;
+      g_line[g_lineLen] = '\0';
+      g_lineLen = 0;
+      return g_line;
     }
-    if (buffer.length() < 64) {  // Limit buffer size
-      buffer += c;
+    if (g_lineLen + 1 < sizeof(g_line)) {
+      g_line[g_lineLen++] = c;
     }
   }
-  return "";
+  return nullptr;
 }
 
-/**
- * @brief Print available commands.
- */
-static void printHelp() {
-  Serial.println();
-  Serial.printf("%s=== SystemChrono CLI Help ===%s\n", LOG_COLOR_CYAN, LOG_COLOR_RESET);
+static void printVersion() {
   Serial.print(F("Version: "));
   Serial.println(SystemChrono::VERSION);
   Serial.print(F("Built:   "));
@@ -83,9 +89,22 @@ static void printHelp() {
   Serial.print(F(" ("));
   Serial.print(SystemChrono::GIT_STATUS);
   Serial.println(F(")"));
+}
+
+/**
+ * @brief Print available commands.
+ */
+static void printHelp() {
+  Serial.println();
+  Serial.printf("%s=== SystemChrono CLI Help ===%s\n", LOG_COLOR_CYAN, LOG_COLOR_RESET);
+  printVersion();
   Serial.println();
   printHelpSection("Common");
   printHelpItem("help", "Show this help");
+  printHelpItem("version", "Print build/version metadata");
+  printHelpItem("info", "Print time source and API diagnostics");
+  printHelpItem("status", "Print current timer state");
+  printHelpItem("config", "Print static configuration notes");
   Serial.println();
   printHelpSection("Time");
   printHelpItem("time", "Show current 64-bit time values");
@@ -111,6 +130,41 @@ static void cmdTime() {
   LOGI("micros64:  %lld", static_cast<long long>(micros64()));
   LOGI("millis64:  %lld", static_cast<long long>(millis64()));
   LOGI("seconds64: %lld", static_cast<long long>(seconds64()));
+}
+
+static void cmdConfig() {
+  Serial.println(F("Config: no runtime configuration required"));
+  Serial.print(F("TIME_FORMAT_BUFFER_SIZE="));
+  Serial.println(static_cast<unsigned long>(TIME_FORMAT_BUFFER_SIZE));
+  Serial.print(F("Time source: "));
+  Serial.println(timeSourceName());
+}
+
+static void cmdInfo() {
+  printVersion();
+  cmdConfig();
+  Serial.println(F("Ownership: no pins, buses, tasks, or storage"));
+  Serial.println(F("Allocation-free APIs: micros64/millis64/seconds64, elapsed timers, format*To"));
+}
+
+static void cmdStatus() {
+  char timeBuf[TIME_FORMAT_BUFFER_SIZE];
+  const Status status = formatNowTo(timeBuf, sizeof(timeBuf));
+  if (status.ok()) {
+    Serial.print(F("Now: "));
+    Serial.println(timeBuf);
+  } else {
+    LOGE("formatNowTo failed: %s", status.msg);
+  }
+
+  const bool running = g_stopwatch.isRunning();
+  Serial.printf("Stopwatch: %s%s%s %lld ms\n",
+                runStateColor(running),
+                running ? "running" : "stopped",
+                LOG_COLOR_RESET,
+                static_cast<long long>(g_stopwatch.elapsedMillis()));
+  Serial.print(F("Stamp captured: "));
+  Serial.println(g_hasStamp ? "true" : "false");
 }
 
 /**
@@ -264,33 +318,44 @@ static void cmdMeasure() {
  * @brief Process a single command line.
  * @param line The command line to process.
  */
-static void processCommand(const String& line) {
-  if (line == "help") {
+static void processCommand(const char* line) {
+  if (!line || line[0] == '\0') {
+    return;
+  }
+  if (strcmp(line, "help") == 0) {
     printHelp();
-  } else if (line == "time") {
+  } else if (strcmp(line, "version") == 0) {
+    printVersion();
+  } else if (strcmp(line, "info") == 0) {
+    cmdInfo();
+  } else if (strcmp(line, "status") == 0) {
+    cmdStatus();
+  } else if (strcmp(line, "config") == 0) {
+    cmdConfig();
+  } else if (strcmp(line, "time") == 0) {
     cmdTime();
-  } else if (line == "uptime") {
+  } else if (strcmp(line, "uptime") == 0) {
     cmdUptime();
-  } else if (line == "format") {
+  } else if (strcmp(line, "format") == 0) {
     cmdFormat();
-  } else if (line == "stamp") {
+  } else if (strcmp(line, "stamp") == 0) {
     cmdStamp();
-  } else if (line == "since") {
+  } else if (strcmp(line, "since") == 0) {
     cmdSince();
-  } else if (line == "start") {
+  } else if (strcmp(line, "start") == 0) {
     cmdStart();
-  } else if (line == "stop") {
+  } else if (strcmp(line, "stop") == 0) {
     cmdStop();
-  } else if (line == "resume") {
+  } else if (strcmp(line, "resume") == 0) {
     cmdResume();
-  } else if (line == "reset") {
+  } else if (strcmp(line, "reset") == 0) {
     cmdReset();
-  } else if (line == "elapsed") {
+  } else if (strcmp(line, "elapsed") == 0) {
     cmdElapsed();
-  } else if (line == "measure") {
+  } else if (strcmp(line, "measure") == 0) {
     cmdMeasure();
   } else {
-    LOGE("Unknown command '%s'. Type 'help' for usage.", line.c_str());
+    LOGE("Unknown command '%s'. Type 'help' for usage.", line);
   }
 }
 
@@ -327,8 +392,8 @@ void loop() {
   }
 
   // Non-blocking command processing
-  const String line = readLine();
-  if (line.length() > 0) {
+  const char* line = readLine();
+  if (line) {
     processCommand(line);
   }
 }

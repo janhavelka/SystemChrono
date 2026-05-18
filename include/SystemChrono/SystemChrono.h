@@ -32,6 +32,7 @@ namespace SystemChrono {
  *
  * @note On ESP32, uses `esp_timer_get_time()` for true 64-bit precision.
  * @note On other Arduino platforms, extends 32-bit `micros()` via wrap tracking.
+ *       Call at least once per 32-bit micros() wrap period on those platforms.
  * @note Thread-safe on ESP32. On other platforms, uses interrupt-disable briefly.
  */
 int64_t micros64();
@@ -153,6 +154,7 @@ String formatNow();
  */
 class Stopwatch {
  public:
+  /// @brief Construct a stopped stopwatch with zero accumulated time.
   Stopwatch();
 
   /**
@@ -238,19 +240,49 @@ class Stopwatch {
  */
 class ElapsedMicros64 {
  public:
+  /// @brief Construct a timer initialized to zero elapsed microseconds.
   ElapsedMicros64();
+
+  /// @brief Construct a timer with an initial elapsed value.
+  /// @param valUs Initial elapsed microseconds.
   explicit ElapsedMicros64(int64_t valUs);
+
+  /// @brief Copy constructor preserving the source timer baseline.
+  /// @param orig Timer to copy.
   ElapsedMicros64(const ElapsedMicros64& orig);
 
+  /// @brief Read elapsed microseconds.
+  /// @return Elapsed microseconds since construction or last assignment.
   operator int64_t() const;
 
+  /// @brief Copy timer baseline from another timer.
+  /// @param rhs Source timer.
+  /// @return Reference to this timer.
   ElapsedMicros64& operator=(const ElapsedMicros64& rhs);
+
+  /// @brief Reset timer to a specific elapsed value.
+  /// @param valUs New elapsed microseconds.
+  /// @return Reference to this timer.
   ElapsedMicros64& operator=(int64_t valUs);
 
+  /// @brief Reduce the reported elapsed value.
+  /// @param valUs Microseconds to subtract from the elapsed reading.
+  /// @return Reference to this timer.
   ElapsedMicros64& operator-=(int64_t valUs);
+
+  /// @brief Increase the reported elapsed value.
+  /// @param valUs Microseconds to add to the elapsed reading.
+  /// @return Reference to this timer.
   ElapsedMicros64& operator+=(int64_t valUs);
 
+  /// @brief Return a timer whose reported elapsed value is reduced.
+  /// @param valUs Microseconds to subtract from the elapsed reading.
+  /// @return Adjusted timer copy.
   ElapsedMicros64 operator-(int64_t valUs) const;
+
+  /// @brief Return a timer whose reported elapsed value is increased.
+  /// @param valUs Microseconds to add to the elapsed reading.
+  /// @return Adjusted timer copy.
   ElapsedMicros64 operator+(int64_t valUs) const;
 
  private:
@@ -274,19 +306,49 @@ class ElapsedMicros64 {
  */
 class ElapsedMillis64 {
  public:
+  /// @brief Construct a timer initialized to zero elapsed milliseconds.
   ElapsedMillis64();
+
+  /// @brief Construct a timer with an initial elapsed value.
+  /// @param valMs Initial elapsed milliseconds.
   explicit ElapsedMillis64(int64_t valMs);
+
+  /// @brief Copy constructor preserving the source timer baseline.
+  /// @param orig Timer to copy.
   ElapsedMillis64(const ElapsedMillis64& orig);
 
+  /// @brief Read elapsed milliseconds.
+  /// @return Elapsed milliseconds since construction or last assignment.
   operator int64_t() const;
 
+  /// @brief Copy timer baseline from another timer.
+  /// @param rhs Source timer.
+  /// @return Reference to this timer.
   ElapsedMillis64& operator=(const ElapsedMillis64& rhs);
+
+  /// @brief Reset timer to a specific elapsed value.
+  /// @param valMs New elapsed milliseconds.
+  /// @return Reference to this timer.
   ElapsedMillis64& operator=(int64_t valMs);
 
+  /// @brief Reduce the reported elapsed value.
+  /// @param valMs Milliseconds to subtract from the elapsed reading.
+  /// @return Reference to this timer.
   ElapsedMillis64& operator-=(int64_t valMs);
+
+  /// @brief Increase the reported elapsed value.
+  /// @param valMs Milliseconds to add to the elapsed reading.
+  /// @return Reference to this timer.
   ElapsedMillis64& operator+=(int64_t valMs);
 
+  /// @brief Return a timer whose reported elapsed value is reduced.
+  /// @param valMs Milliseconds to subtract from the elapsed reading.
+  /// @return Adjusted timer copy.
   ElapsedMillis64 operator-(int64_t valMs) const;
+
+  /// @brief Return a timer whose reported elapsed value is increased.
+  /// @param valMs Milliseconds to add to the elapsed reading.
+  /// @return Adjusted timer copy.
   ElapsedMillis64 operator+(int64_t valMs) const;
 
  private:
@@ -307,19 +369,49 @@ class ElapsedMillis64 {
  */
 class ElapsedSeconds64 {
  public:
+  /// @brief Construct a timer initialized to zero elapsed seconds.
   ElapsedSeconds64();
+
+  /// @brief Construct a timer with an initial elapsed value.
+  /// @param valS Initial elapsed seconds.
   explicit ElapsedSeconds64(int64_t valS);
+
+  /// @brief Copy constructor preserving the source timer baseline.
+  /// @param orig Timer to copy.
   ElapsedSeconds64(const ElapsedSeconds64& orig);
 
+  /// @brief Read elapsed seconds.
+  /// @return Elapsed seconds since construction or last assignment.
   operator int64_t() const;
 
+  /// @brief Copy timer baseline from another timer.
+  /// @param rhs Source timer.
+  /// @return Reference to this timer.
   ElapsedSeconds64& operator=(const ElapsedSeconds64& rhs);
+
+  /// @brief Reset timer to a specific elapsed value.
+  /// @param valS New elapsed seconds.
+  /// @return Reference to this timer.
   ElapsedSeconds64& operator=(int64_t valS);
 
+  /// @brief Reduce the reported elapsed value.
+  /// @param valS Seconds to subtract from the elapsed reading.
+  /// @return Reference to this timer.
   ElapsedSeconds64& operator-=(int64_t valS);
+
+  /// @brief Increase the reported elapsed value.
+  /// @param valS Seconds to add to the elapsed reading.
+  /// @return Reference to this timer.
   ElapsedSeconds64& operator+=(int64_t valS);
 
+  /// @brief Return a timer whose reported elapsed value is reduced.
+  /// @param valS Seconds to subtract from the elapsed reading.
+  /// @return Adjusted timer copy.
   ElapsedSeconds64 operator-(int64_t valS) const;
+
+  /// @brief Return a timer whose reported elapsed value is increased.
+  /// @param valS Seconds to add to the elapsed reading.
+  /// @return Adjusted timer copy.
   ElapsedSeconds64 operator+(int64_t valS) const;
 
  private:
