@@ -17,8 +17,8 @@ while preserving Arduino source compatibility where possible.
   source.
 - Root `CMakeLists.txt` and `idf_component.yml` make the library consumable as
   an ESP-IDF component.
-- `examples/espidf_basic` demonstrates `ElapsedMillis64`, `Stopwatch`,
-  `formatNowTo()`, and FreeRTOS delay outside the library.
+- `examples/espidf_basic` shares the same colored interactive CLI source as the
+  Arduino example while using pure ESP-IDF entry-point and console glue.
 
 ## Current State
 
@@ -135,10 +135,16 @@ from the existing release process.
 ## Example Plan
 
 - IDF example:
-  - `examples/espidf_basic/main/main.cpp` with `app_main()`.
-  - Print `micros64()`, `millis64()`, `seconds64()`.
-  - Demonstrate `ElapsedMillis64`, `Stopwatch`, and `formatNowTo()`.
-  - Sleep in the example loop with `vTaskDelay(pdMS_TO_TICKS(1000))`.
+  - `examples/espidf_basic/main/main.cpp` defines
+    `SYSTEMCHRONO_EXAMPLE_PLATFORM_IDF`, includes
+    `examples/common/IdfArduinoCompat.h`, and then includes
+    `examples/01_basic_bringup_cli/main.cpp`.
+  - The Arduino and ESP-IDF examples expose the same help grouping, ANSI
+    coloring, time/uptime/format/stamp/since commands, stopwatch commands, and
+    status/config diagnostics.
+  - `IdfArduinoCompat.h` provides only the example-local `Serial`, `millis()`,
+    `micros()`, `delay()`, `delayMicroseconds()`, `yield()`, and `F()` surface
+    needed by the CLI.
 - Arduino example:
   - Keep existing CLI example compiling.
   - Confirm `formatTime()` and `formatNow()` remain available in Arduino mode.
@@ -182,7 +188,7 @@ Completed locally:
 
 Pending in this shell:
 
-- `idf.py build` for `examples/espidf_basic`
+- `idf.py build` for the shared-source CLI in `examples/espidf_basic`
 - IDF target builds for `esp32s2` and `esp32s3`
 
 `idf.py` was not available on PATH during this implementation pass, so the

@@ -12,7 +12,11 @@
  * Type 'help' for available commands.
  */
 
+#if defined(SYSTEMCHRONO_EXAMPLE_PLATFORM_IDF)
+#include "examples/common/IdfArduinoCompat.h"
+#else
 #include <Arduino.h>
+#endif
 #include <string.h>
 
 #include "examples/common/BoardPins.h"
@@ -50,7 +54,7 @@ static const char* runStateColor(bool running) {
 }
 
 static const char* timeSourceName() {
-#if defined(ARDUINO_ARCH_ESP32)
+#if defined(ARDUINO_ARCH_ESP32) || defined(SYSTEMCHRONO_EXAMPLE_PLATFORM_IDF)
   return "esp_timer_get_time";
 #else
   return "micros-wrap-tracker";
@@ -249,14 +253,18 @@ static void cmdUptime() {
   const int64_t mins = (secs % 3600) / 60;
   const int64_t s    = secs % 60;
 
-  // Also show formatted version via formatTime(micros64()) (String variant)
-  const String formatted = formatTime(micros64());
+  char formatted[TIME_FORMAT_BUFFER_SIZE];
+  const Status status = formatTimeTo(micros64(), formatted, sizeof(formatted));
+  if (!status.ok()) {
+    LOGE("formatTimeTo failed: %s", status.msg);
+    return;
+  }
   LOGI("Uptime: %lld s (%lld:%02lld:%02lld) | formatted: %s",
        static_cast<long long>(secs),
        static_cast<long long>(hrs),
        static_cast<long long>(mins),
        static_cast<long long>(s),
-       formatted.c_str());
+       formatted);
 }
 
 /**

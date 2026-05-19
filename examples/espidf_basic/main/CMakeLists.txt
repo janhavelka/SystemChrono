@@ -1,5 +1,5 @@
 idf_component_register(
   SRCS "main.cpp"
-  INCLUDE_DIRS "."
-  REQUIRES SystemChrono freertos
+  INCLUDE_DIRS "." "../../common" "../../.."
+  REQUIRES SystemChrono esp_timer esp_rom freertos vfs
 )

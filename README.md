@@ -185,7 +185,7 @@ pio device monitor -e cli_esp32s3
 pio run -e cli_esp32s2 -t upload
 pio device monitor -e cli_esp32s2
 
-# Native ESP-IDF example, from examples/espidf_basic when idf.py is available
+# Native ESP-IDF full CLI, from examples/espidf_basic when idf.py is available
 idf.py set-target esp32s3
 idf.py build
 ```
