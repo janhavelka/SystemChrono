@@ -1,0 +1,10 @@
+version: "1.2.0"
+description: "64-bit monotonic time helpers"
+license: "MIT"
+url: "https://github.com/janhavelka/SystemChrono"
+repository: "https://github.com/janhavelka/SystemChrono.git"
+targets:
+  - esp32s2
+  - esp32s3
+dependencies:
+  idf: ">=6.0.1"

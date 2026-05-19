@@ -8,12 +8,10 @@
 #include <limits>
 #include <stdio.h>
 
-#if !defined(ARDUINO)
-  #error "SystemChrono: this library currently supports Arduino builds only."
-#endif
-
-#if defined(ARDUINO_ARCH_ESP32)
+#if defined(ESP_PLATFORM)
   #include "esp_timer.h"
+#elif defined(ARDUINO)
+  #include <Arduino.h>
 #endif
 
 namespace SystemChrono {
@@ -133,8 +131,8 @@ static inline int32_t sizeToDetail(size_t value) {
 // ===========================================================================
 
 static inline int64_t micros64Impl() {
-#if defined(ARDUINO_ARCH_ESP32)
-  // ESP32: monotonic microseconds since boot
+#if defined(ESP_PLATFORM)
+  // ESP32/ESP-IDF: monotonic microseconds since boot.
   return static_cast<int64_t>(esp_timer_get_time());
 
 #elif defined(ARDUINO)
@@ -234,6 +232,7 @@ Status formatNowTo(char* out, size_t outLen) {
   return formatTimeTo(micros64Impl(), out, outLen);
 }
 
+#if defined(ARDUINO)
 String formatTime(int64_t microsSinceBoot) {
   char buf[TIME_FORMAT_BUFFER_SIZE];
   const Status status = formatTimeTo(microsSinceBoot, buf, sizeof(buf));
@@ -246,6 +245,7 @@ String formatTime(int64_t microsSinceBoot) {
 String formatNow() {
   return formatTime(micros64Impl());
 }
+#endif
 
 // ===========================================================================
 // Stopwatch Implementation

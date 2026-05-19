@@ -1,22 +1,26 @@
 /**
  * @file SystemChrono.h
- * @brief 64-bit monotonic time helpers for Arduino.
+ * @brief 64-bit monotonic time helpers for Arduino and ESP-IDF.
  *
  * Provides `micros64()`, `millis64()`, `seconds64()` with wrap-safe elapsed
  * calculations, human-readable formatting, and elapsed timer classes that
  * avoid the ~70 minute wrap of 32-bit timers.
  *
- * Uses `esp_timer_get_time()` on ESP32 for true 64-bit monotonic time.
+ * Uses `esp_timer_get_time()` on ESP32/ESP-IDF for true 64-bit monotonic time.
  * Falls back to wrap-tracked `micros()` on other Arduino platforms.
  *
- * @note This library is header-only for the API declarations. Implementation
- *       is in SystemChrono.cpp (compiled as part of the library).
+ * @note Public declarations live in this header. Implementation is in
+ *       SystemChrono.cpp and must be compiled as part of the library/component.
  */
 
 #pragma once
 
-#include <Arduino.h>
+#include <stddef.h>
 #include <stdint.h>
+
+#if defined(ARDUINO)
+#include <Arduino.h>
+#endif
 
 #include "SystemChrono/Status.h"
 
@@ -30,10 +34,11 @@ namespace SystemChrono {
  * @brief Get current time in microseconds (64-bit).
  * @return Monotonic microseconds since boot.
  *
- * @note On ESP32, uses `esp_timer_get_time()` for true 64-bit precision.
+ * @note On ESP32/ESP-IDF, uses `esp_timer_get_time()` for true 64-bit precision.
  * @note On other Arduino platforms, extends 32-bit `micros()` via wrap tracking.
  *       Call at least once per 32-bit micros() wrap period on those platforms.
- * @note Thread-safe on ESP32. On other platforms, uses interrupt-disable briefly.
+ * @note Thread-safe on ESP32/ESP-IDF. On other Arduino platforms, uses
+ *       interrupt-disable briefly.
  */
 int64_t micros64();
 
@@ -113,6 +118,7 @@ Status formatTimeTo(int64_t microsSinceBoot, char* out, size_t outLen);
  */
 Status formatNowTo(char* out, size_t outLen);
 
+#if defined(ARDUINO)
 /**
  * @brief Format microseconds as HH:MM:SS.mmm string.
  * @param microsSinceBoot Timestamp in microseconds.
@@ -131,6 +137,7 @@ String formatTime(int64_t microsSinceBoot);
  * @note For deterministic memory usage, prefer formatNowTo().
  */
 String formatNow();
+#endif
 
 // ===========================================================================
 // Stopwatch Class

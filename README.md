@@ -1,6 +1,8 @@
 # SystemChrono
 
-64-bit monotonic time helpers for Arduino, using `esp_timer_get_time()` on ESP32 and rollover-tracked `micros()` elsewhere.
+64-bit monotonic time helpers for Arduino and ESP-IDF, using
+`esp_timer_get_time()` on ESP32/IDF and rollover-tracked `micros()` on generic
+Arduino platforms.
 
 [![CI](https://github.com/janhavelka/SystemChrono/actions/workflows/ci.yml/badge.svg)](https://github.com/janhavelka/SystemChrono/actions/workflows/ci.yml)
 
@@ -10,9 +12,9 @@
 - **Elapsed helpers:** `microsSince()`, `millisSince()`, `secondsSince()` for interval checks
 - **Elapsed timer classes:** `ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64` for non-blocking intervals
 - **Stopwatch:** Start/stop/resume/reset with microsecond precision
-- **Human-readable formatting:** allocation-free `formatTimeTo()` / `formatNowTo()` plus String wrappers
-- **ESP32 optimized:** Uses `esp_timer_get_time()` for true 64-bit monotonic time
-- **Arduino compatible:** Falls back to wrap-tracked `micros()` on other platforms
+- **Human-readable formatting:** allocation-free `formatTimeTo()` / `formatNowTo()` plus Arduino-only `String` wrappers
+- **ESP32/ESP-IDF optimized:** Uses `esp_timer_get_time()` for true 64-bit monotonic time
+- **Arduino compatible:** Falls back to wrap-tracked `micros()` on non-ESP32 Arduino platforms
 
 ## Quickstart
 
@@ -107,7 +109,7 @@ void printUptime() {
     Serial.println(timeBuf);
   }
 
-  // String wrappers remain available for convenience
+  // Arduino-only String wrappers remain available for convenience
   Serial.println(formatNow());
 }
 ```
@@ -126,8 +128,8 @@ void printUptime() {
 | `int64_t secondsSince(int64_t)`   | Elapsed seconds since timestamp                |
 | `Status formatTimeTo(int64_t, char*, size_t)` | Allocation-free format into caller buffer |
 | `Status formatNowTo(char*, size_t)` | Allocation-free format into caller buffer    |
-| `String formatTime(int64_t)`      | Format microseconds as `HH:MM:SS.mmm`          |
-| `String formatNow()`              | Format current time as `HH:MM:SS.mmm`          |
+| `String formatTime(int64_t)`      | Arduino-only wrapper returning `HH:MM:SS.mmm`  |
+| `String formatNow()`              | Arduino-only wrapper returning current time    |
 
 ### Stopwatch Class
 
@@ -182,26 +184,30 @@ pio device monitor -e cli_esp32s3
 # CLI example (S2)
 pio run -e cli_esp32s2 -t upload
 pio device monitor -e cli_esp32s2
+
+# Native ESP-IDF example, from examples/espidf_basic when idf.py is available
+idf.py set-target esp32s3
+idf.py build
 ```
 
 ## Threading & Timing Model
 
 - **Single-threaded:** All functions safe to call from main loop
 - **Non-blocking:** No delays or waits
-- **ISR safety (ESP32):** `micros64()` uses `esp_timer_get_time()` which is ISR-safe
-- **ISR safety (other):** Uses `noInterrupts()`/`interrupts()` briefly for wrap tracking
+- **ISR safety (ESP32/ESP-IDF):** `micros64()` uses `esp_timer_get_time()` which is ISR-safe
+- **ISR safety (generic Arduino):** Uses `noInterrupts()`/`interrupts()` briefly for wrap tracking
 
 ## Resource Ownership
 
 - No pins, buses, tasks, or peripherals are owned by this library
-- Time source is platform-provided (`esp_timer_get_time()` or `micros()`)
+- Time source is platform-provided (`esp_timer_get_time()` or Arduino `micros()`)
 - No hidden storage or NVS side effects
 
 ## Memory
 
 - No heap allocations in `micros64()`, elapsed helpers, `Stopwatch`, or elapsed timer classes
 - `formatTimeTo()` and `formatNowTo()` are allocation-free
-- `formatTime()` and `formatNow()` return `String` and may allocate heap memory
+- `formatTime()` and `formatNow()` are Arduino-only `String` wrappers and may allocate heap memory
 
 ## Error Handling
 
@@ -213,8 +219,10 @@ pio device monitor -e cli_esp32s2
 
 ## Platform Notes
 
-### ESP32
-Uses `esp_timer_get_time()` for true 64-bit monotonic microseconds since boot. Thread-safe.
+### ESP32 / ESP-IDF
+Uses `esp_timer_get_time()` for true 64-bit monotonic microseconds since boot.
+Pure ESP-IDF callers use `formatTimeTo()` and `formatNowTo()` with
+caller-provided buffers; Arduino `String` helpers are not part of the IDF API.
 
 ### Other Arduino Platforms
 Extends 32-bit `micros()` to 64-bit via wrap tracking. Requires periodic calls (at least once per ~70 minutes) to detect rollovers. Uses interrupt-disable briefly when reading.

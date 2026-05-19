@@ -14,11 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Status::inProgress()` helpers.
 - CLI `version`, `info`, `status`, and `config` diagnostics for build metadata,
   timer state, time source, and static formatting settings.
+- ESP-IDF component metadata and a native `examples/espidf_basic` app.
+- Pure ESP-IDF support through `esp_timer_get_time()` and allocation-free
+  formatting APIs.
+- ESP-IDF port implementation notes.
 
 ### Changed
 - Maintainer metadata now uses the project contact address instead of a placeholder email.
 - README now keeps the AGENTS reference as plain text so generated API docs do
   not try to resolve it as an API page.
+- Public headers no longer require Arduino unless compiling Arduino-only
+  `String` wrappers.
+- PlatformIO metadata now declares ESP-IDF framework compatibility.
 
 ## [1.2.0] - 2026-03-01
 

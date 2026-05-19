@@ -1,36 +1,52 @@
-# SystemChrono ESP-IDF v6.0.1 Port Readiness Audit
+# SystemChrono ESP-IDF v6.0.1 Port
 
 Date: 2026-05-17.
-Scope: documentation for a future ESP-IDF port only. Do not change code,
-`library.json`, `README.md`, `CHANGELOG.md`, generated files, examples, or
-tests while applying this audit.
+Updated: 2026-05-19.
+Scope: keep SystemChrono usable from both Arduino/PlatformIO and pure ESP-IDF
+while preserving Arduino source compatibility where possible.
+
+## Result
+
+- Public headers no longer include `<Arduino.h>` for pure ESP-IDF builds.
+- Arduino `String` helpers remain available only under `#if defined(ARDUINO)`.
+- Cross-platform deterministic APIs remain unchanged: `micros64()`,
+  `millis64()`, `seconds64()`, elapsed helpers, timer classes, `Stopwatch`,
+  `formatTimeTo()`, and `formatNowTo()`.
+- `src/SystemChrono.cpp` no longer blocks non-Arduino builds.
+- Pure ESP-IDF builds use `esp_timer_get_time()` for the platform microsecond
+  source.
+- Root `CMakeLists.txt` and `idf_component.yml` make the library consumable as
+  an ESP-IDF component.
+- `examples/espidf_basic` demonstrates `ElapsedMillis64`, `Stopwatch`,
+  `formatNowTo()`, and FreeRTOS delay outside the library.
 
 ## Current State
 
 - `SystemChrono` provides 64-bit monotonic time helpers, elapsed timer classes,
   `Stopwatch`, and allocation-free formatters.
-- ESP32 Arduino builds already use `esp_timer_get_time()` for `micros64()`.
+- ESP32 Arduino and pure ESP-IDF builds use `esp_timer_get_time()` for
+  `micros64()`.
 - Public header `include/SystemChrono/SystemChrono.h` includes `<Arduino.h>`
-  and exposes Arduino `String` return APIs: `formatTime()` and `formatNow()`.
-- `src/SystemChrono.cpp` hard-blocks non-Arduino builds with `#error`.
+  only under Arduino and exposes `String` return APIs only in Arduino builds.
+- `src/SystemChrono.cpp` compiles for pure ESP-IDF and Arduino.
 - The deterministic APIs already exist: `formatTimeTo()`, `formatNowTo()`,
   fixed caller buffers, no hardware ownership, no tasks.
-- Some public/project docs still describe the library as header-only. That is
-  stale for the current repository; the implementation lives in
-  `src/SystemChrono.cpp` and the IDF component must compile that source.
-- `platformio.ini` and `library.json` are Arduino-only. There is no root
-  `CMakeLists.txt`, `idf_component.yml`, or IDF example.
+- Public/project docs now describe the library as source-backed. The
+  implementation lives in `src/SystemChrono.cpp` and the IDF component compiles
+  that source.
+- `platformio.ini` remains the Arduino example build entry point.
+- `library.json` declares Arduino and ESP-IDF compatibility.
+- Root `CMakeLists.txt`, `idf_component.yml`, and a native IDF example are
+  present.
 
-## Blockers
+## Previous Blockers Resolved
 
-- Pure IDF cannot include the public header because of unconditional
-  `<Arduino.h>`.
-- Pure IDF cannot compile the implementation because of the non-Arduino
-  `#error`.
-- Arduino `String` in the public API is a heap-risk and an IDF compile blocker.
+- Pure IDF can include the public header without `<Arduino.h>`.
+- Pure IDF can compile the implementation.
+- Arduino `String` helpers are excluded from the IDF ABI.
 - Generic Arduino fallback uses `micros()`, `noInterrupts()`, and
-  `interrupts()`; these must stay Arduino-only.
-- No component metadata declares the `esp_timer` dependency.
+  `interrupts()` only under Arduino.
+- Component metadata declares the `esp_timer` dependency.
 
 ## Exact Files and APIs to Change
 
@@ -52,7 +68,7 @@ tests while applying this audit.
   - No required API change. Clean up stale comments that imply the library is
     header-only, then keep the file reserved unless a future injected clock
     source is needed.
-- Build/example files to add later:
+- Build/example files:
   - `CMakeLists.txt`
   - `idf_component.yml`
   - `examples/espidf_basic/`
@@ -155,14 +171,20 @@ from the existing release process.
 - FreeRTOS delays belong in examples or applications, not this timing library.
 - Avoid heap in formatting; `snprintf()` into caller buffers is acceptable.
 
-## Ordered Checklist
+## Validation
 
-1. Remove unconditional Arduino include from the public header.
-2. Guard or move Arduino `String` APIs.
-3. Remove the non-Arduino `#error`.
-4. Add pure IDF `esp_timer_get_time()` platform path.
-5. Add root `CMakeLists.txt` and `idf_component.yml`.
-6. Add a minimal IDF example.
-7. Build IDF component/examples for `esp32s2` and `esp32s3`.
-8. Build existing Arduino examples.
-9. Run formatter and elapsed-time unit tests.
+Completed locally:
+
+- `python -m platformio run -e cli_esp32s3`
+- `python -m platformio run -e cli_esp32s2`
+- `python scripts/generate_version.py`
+- `git diff --check`
+
+Pending in this shell:
+
+- `idf.py build` for `examples/espidf_basic`
+- IDF target builds for `esp32s2` and `esp32s3`
+
+`idf.py` was not available on PATH during this implementation pass, so the
+ESP-IDF example is implemented and documented but still needs a real ESP-IDF
+toolchain build before release.

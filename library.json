@@ -1,7 +1,7 @@
 {
   "name": "SystemChrono",
   "version": "1.2.0",
-  "description": "64-bit monotonic time helpers for Arduino. Uses esp_timer on ESP32 and wrap-tracked micros() elsewhere. Provides micros64(), millis64(), seconds64(), elapsed timer classes, stopwatch, and human-readable formatting.",
+  "description": "64-bit monotonic time helpers for Arduino and ESP-IDF. Uses esp_timer on ESP32/IDF and wrap-tracked micros() on generic Arduino. Provides micros64(), millis64(), seconds64(), elapsed timer classes, stopwatch, and allocation-free formatting.",
   "keywords": [
     "timer",
     "time",
@@ -12,6 +12,7 @@
     "stopwatch",
     "64-bit",
     "esp32",
+    "esp-idf",
     "arduino",
     "non-blocking"
   ],
@@ -30,7 +31,8 @@
   "license": "MIT",
   "homepage": "https://github.com/janhavelka/SystemChrono",
   "frameworks": [
-    "arduino"
+    "arduino",
+    "espidf"
   ],
   "platforms": [
     "espressif32",

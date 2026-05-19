@@ -2,9 +2,9 @@
  * @file Config.h
  * @brief Configuration structure for SystemChrono.
  *
- * SystemChrono is a header-only time utility library. This Config struct
- * is provided for consistency with the template pattern but is not required
- * for basic usage of the free functions and elapsed timer classes.
+ * SystemChrono is a source-backed time utility library. This Config struct is
+ * provided for consistency with the template pattern but is not required for
+ * basic usage of the free functions and elapsed timer classes.
  */
 
 #pragma once
