@@ -12,11 +12,7 @@
  * Type 'help' for available commands.
  */
 
-#if defined(SYSTEMCHRONO_EXAMPLE_PLATFORM_IDF)
-#include "examples/common/IdfArduinoCompat.h"
-#else
 #include <Arduino.h>
-#endif
 #include <string.h>
 
 #include "examples/common/BoardPins.h"
@@ -54,7 +50,7 @@ static const char* runStateColor(bool running) {
 }
 
 static const char* timeSourceName() {
-#if defined(ARDUINO_ARCH_ESP32) || defined(SYSTEMCHRONO_EXAMPLE_PLATFORM_IDF)
+#if defined(ARDUINO_ARCH_ESP32)
   return "esp_timer_get_time";
 #else
   return "micros-wrap-tracker";

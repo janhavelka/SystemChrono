@@ -183,6 +183,14 @@ struct Config {
 - **API:** `set_pattern(Pattern)`, `tick()` advances animation
 - **Patterns:** Stored as const arrays, no dynamic allocation
 
+### Framework Boundary and Native IDF Examples
+- Core/public headers and `src/SystemChrono.cpp` must stay framework-neutral except for guarded platform time-source selection.
+- Arduino `String` helpers are Arduino-only compatibility APIs. Cross-framework code must use allocation-free `formatTimeTo()` and `formatNowTo()`.
+- The library owns no pins, buses, tasks, storage, delays, or console resources. Applications/examples own scheduling and output.
+- ESP-IDF examples must use native IDF APIs (`app_main`, `esp_timer` through the library, FreeRTOS delays, fixed C buffers or native console APIs). Do not use Arduino compatibility facades in IDF examples.
+- Preserve or document Arduino/IDF CLI parity. If the native IDF CLI intentionally differs from the Arduino CLI, list the difference in README and `docs/IDF_PORT.md`.
+- Update `scripts/check_idf_example_contract.py` whenever the IDF example changes.
+
 ---
 
 ## Error Handling

@@ -135,16 +135,13 @@ from the existing release process.
 ## Example Plan
 
 - IDF example:
-  - `examples/espidf_basic/main/main.cpp` defines
-    `SYSTEMCHRONO_EXAMPLE_PLATFORM_IDF`, includes
-    `examples/common/IdfArduinoCompat.h`, and then includes
-    `examples/01_basic_bringup_cli/main.cpp`.
-  - The Arduino and ESP-IDF examples expose the same help grouping, ANSI
-    coloring, time/uptime/format/stamp/since commands, stopwatch commands, and
-    status/config diagnostics.
-  - `IdfArduinoCompat.h` provides only the example-local `Serial`, `millis()`,
-    `micros()`, `delay()`, `delayMicroseconds()`, `yield()`, and `F()` surface
-    needed by the CLI.
+  - `examples/espidf_basic/main/main.cpp` is a native `app_main()` program.
+  - It uses FreeRTOS delays, nonblocking POSIX stdin, `esp_rom_delay_us`, and
+    fixed C buffers directly.
+  - It does not include Arduino sources and does not use a `Serial`/`millis`/
+    `delay` compatibility facade.
+  - The command names mirror the Arduino CLI: help/version/info/status/config,
+    time/uptime/format/stamp/since/measure, and stopwatch controls.
 - Arduino example:
   - Keep existing CLI example compiling.
   - Confirm `formatTime()` and `formatNow()` remain available in Arduino mode.
@@ -188,7 +185,7 @@ Completed locally:
 
 Pending in this shell:
 
-- `idf.py build` for the shared-source CLI in `examples/espidf_basic`
+- `idf.py build` for the native CLI in `examples/espidf_basic`
 - IDF target builds for `esp32s2` and `esp32s3`
 
 `idf.py` was not available on PATH during this implementation pass, so the

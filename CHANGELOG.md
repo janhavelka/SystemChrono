@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pure ESP-IDF support through `esp_timer_get_time()` and allocation-free
   formatting APIs.
 - ESP-IDF port implementation notes.
+- Native ESP-IDF example contract checker that rejects Arduino compatibility
+  facades and enforces the fixed-buffer `app_main` CLI surface.
 
 ### Changed
 - Maintainer metadata now uses the project contact address instead of a placeholder email.
@@ -26,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Public headers no longer require Arduino unless compiling Arduino-only
   `String` wrappers.
 - PlatformIO metadata now declares ESP-IDF framework compatibility.
+- `examples/espidf_basic` now uses native ESP-IDF console glue instead of
+  including the Arduino-shaped CLI through a compatibility facade.
 
 ## [1.2.0] - 2026-03-01
 

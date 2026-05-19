@@ -185,10 +185,15 @@ pio device monitor -e cli_esp32s3
 pio run -e cli_esp32s2 -t upload
 pio device monitor -e cli_esp32s2
 
-# Native ESP-IDF full CLI, from examples/espidf_basic when idf.py is available
+# Native ESP-IDF CLI, from examples/espidf_basic when idf.py is available
 idf.py set-target esp32s3
 idf.py build
 ```
+
+The ESP-IDF example uses `app_main`, FreeRTOS, POSIX stdin, `esp_rom_delay_us`,
+and fixed C buffers directly. It intentionally does not use Arduino
+compatibility facades. Its command set mirrors the Arduino CLI commands listed
+by `help`.
 
 ## Threading & Timing Model
 

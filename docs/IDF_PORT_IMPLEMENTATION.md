@@ -19,7 +19,6 @@ Branch: `feature/systemchrono-idf-port`.
 - `examples/espidf_basic/CMakeLists.txt`
 - `examples/espidf_basic/main/CMakeLists.txt`
 - `examples/espidf_basic/main/main.cpp`
-- `examples/common/IdfArduinoCompat.h`
 - `scripts/check_idf_example_contract.py`
 
 ## Audit Resolution
@@ -39,15 +38,14 @@ Branch: `feature/systemchrono-idf-port`.
   - The root component compiles `src/SystemChrono.cpp`, exports `include/`, and
     declares `esp_timer`.
 - Native IDF example:
-  - `app_main()` defines `SYSTEMCHRONO_EXAMPLE_PLATFORM_IDF`, includes the
-    example-local Arduino compatibility layer, and includes
-    `examples/01_basic_bringup_cli/main.cpp`.
-  - ESP-IDF now exposes the same help structure, ANSI coloring, time accessors,
-    formatter diagnostics, stamp/since flow, and stopwatch commands as the
-    Arduino CLI.
-  - `scripts/check_idf_example_contract.py` statically guards the shared-source
-    include, required CMake dependencies, compatibility shim, and CLI command
-    surface.
+  - `app_main()` uses native ESP-IDF and POSIX APIs directly: FreeRTOS delays,
+    nonblocking `STDIN_FILENO`, `esp_rom_delay_us`, and fixed C buffers.
+  - ESP-IDF exposes the same command names as the Arduino CLI for time,
+    formatting, stamp/since, and stopwatch diagnostics without including
+    Arduino source or compatibility facades.
+  - `scripts/check_idf_example_contract.py` statically guards required CMake
+    dependencies, native-IDF tokens, forbidden Arduino facade tokens, and the
+    CLI command surface.
 
 ## Remaining Hardware Checks
 
