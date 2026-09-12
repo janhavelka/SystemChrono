@@ -44,34 +44,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2026-02-10
 
+Includes earlier development work first published in this release.
+
 ### Changed
 - Restructured from porting_library to template structure
 - Renamed classes to PascalCase: `ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64`
 - Added lowercase aliases for backward compatibility
 - Renamed `Stopwatch::running()` to `Stopwatch::isRunning()` for consistency
 - Added comprehensive Doxygen documentation
+- Updated LICENSE copyright notice
 
 ### Added
 - Allocation-free formatting APIs: `formatTimeTo()` and `formatNowTo()`
 - `TIME_FORMAT_BUFFER_SIZE` constant for deterministic caller buffer sizing
-
-### Fixed
-- Eliminated undefined signed-overflow behavior in elapsed timer arithmetic via saturating math
-- Hardened time formatting for extreme negative values (including `INT64_MIN`)
-- Fixed PlatformIO pre-build version generation so `Version.h` is created during builds
-
-## [1.0.1] - 2026-02-06
-
-### Changed
-- Updated LICENSE copyright notice
-
-### Fixed
-- Minor documentation updates
-
-## [1.0.0] - 2026-01-10
-
-### Added
-- Initial release
+- Initial library implementation
 - 64-bit time accessors: `micros64()`, `millis64()`, `seconds64()`
 - Elapsed helpers: `microsSince()`, `millisSince()`, `secondsSince()`
 - Elapsed timer classes: `elapsedMicros64`, `elapsedMillis64`, `elapsedSeconds64`
@@ -80,8 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ESP32 optimized using `esp_timer_get_time()`
 - Generic Arduino support with wrap-tracked `micros()`
 
+### Fixed
+- Eliminated undefined signed-overflow behavior in elapsed timer arithmetic via saturating math
+- Hardened time formatting for extreme negative values (including `INT64_MIN`)
+- Fixed PlatformIO pre-build version generation so `Version.h` is created during builds
+- Minor documentation updates
+
 [Unreleased]: https://github.com/janhavelka/SystemChrono/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/janhavelka/SystemChrono/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/janhavelka/SystemChrono/compare/v1.0.1...v1.1.0
-[1.0.1]: https://github.com/janhavelka/SystemChrono/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/janhavelka/SystemChrono/releases/tag/v1.0.0
+[1.1.0]: https://github.com/janhavelka/SystemChrono/releases/tag/v1.1.0
