@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   facades and enforces the fixed-buffer `app_main` CLI surface.
 
 ### Changed
+- Pin the Arduino PlatformIO platform to `espressif32@7.0.1` so local and CI
+  builds cannot silently select a different cached platform fork.
 - Maintainer metadata now uses the project contact address instead of a placeholder email.
 - README now keeps the AGENTS reference as plain text so generated API docs do
   not try to resolve it as an API page.

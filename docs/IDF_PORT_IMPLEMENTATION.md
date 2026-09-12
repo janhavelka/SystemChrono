@@ -49,11 +49,12 @@ Branch: `feature/systemchrono-idf-port`.
 
 ## Remaining Hardware Checks
 
-- Build `examples/espidf_basic` with ESP-IDF v6.0.1 for `esp32s3` and `esp32s2`;
-  `idf.py` was not available on PATH in this shell.
 - Verify repeated `millis64()` monotonicity over FreeRTOS delays on hardware.
 
 ## Verification
+
+CI now builds the native ESP-IDF v6.0.1 example and Arduino CLI for both S2/S3
+and checks the IDF example contract on every branch push.
 
 - `python -m platformio run -e cli_esp32s3`: passed.
 - `python -m platformio run -e cli_esp32s2`: passed.

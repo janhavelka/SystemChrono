@@ -183,11 +183,6 @@ Completed locally:
 - `python scripts/generate_version.py`
 - `git diff --check`
 
-Pending in this shell:
-
-- `idf.py build` for the native CLI in `examples/espidf_basic`
-- IDF target builds for `esp32s2` and `esp32s3`
-
-`idf.py` was not available on PATH during this implementation pass, so the
-ESP-IDF example is implemented and documented but still needs a real ESP-IDF
-toolchain build before release.
+CI builds `examples/espidf_basic` with ESP-IDF v6.0.1 for `esp32s2` and
+`esp32s3` on every branch push. It also runs the native example contract check
+and both Arduino CLI builds. Hardware monotonicity checks remain separate.
