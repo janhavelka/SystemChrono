@@ -3,12 +3,15 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: ['**']
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+
+env:
+  PLATFORMIO_VERSION: "6.1.19"
 
 jobs:
-  # Optional: check that library.json is valid
   validate-library:
     runs-on: ubuntu-latest
     steps:
@@ -19,3 +22,39 @@ jobs:
         run: |
           python -c "import json; json.load(open('library.json'))"
           echo "library.json is valid JSON"
+
+      - name: Check native ESP-IDF example contract
+        run: python scripts/check_idf_example_contract.py
+
+  build:
+    runs-on: ubuntu-latest
+    needs: validate-library
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [cli_esp32s3, cli_esp32s2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PlatformIO
+        run: python -m pip install "platformio==${PLATFORMIO_VERSION}"
+      - name: Build ${{ matrix.environment }}
+        run: pio run -e ${{ matrix.environment }}
+
+  build-espidf:
+    runs-on: ubuntu-latest
+    needs: validate-library
+    container: espressif/idf:v6.0.1
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [esp32s3, esp32s2]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build native ESP-IDF example
+        shell: bash
+        run: |
+          . "${IDF_PATH:-/opt/esp/idf}/export.sh"
+          idf.py -C examples/espidf_basic set-target ${{ matrix.target }} build

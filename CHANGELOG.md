@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CI now builds both Arduino and native ESP-IDF examples for ESP32-S2/S3,
+  checks the ESP-IDF example contract, and runs on every branch push or manually.
 - Doxygen configuration for generated API documentation.
 - README instructions for local API documentation generation.
 - `Status::Ok()`, `Status::Error(...)`, free `Error(...)`, and
