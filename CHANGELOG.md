@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   facades and enforces the fixed-buffer `app_main` CLI surface.
 
 ### Changed
+- Clarified agent ownership, one branch per promptset, and automatic commit/push of verified work chunks.
 - Pin the Arduino PlatformIO platform to `espressif32@7.0.1` so local and CI
   builds cannot silently select a different cached platform fork.
 - Maintainer metadata now uses the project contact address instead of a placeholder email.
