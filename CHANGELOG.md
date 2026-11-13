@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   facades and enforces the fixed-buffer `app_main` CLI surface.
 
 ### Changed
+- Unified author, copyright and contact metadata: THYMOS Solution s.r.o.,
+  Jan Havelka, info@thymos.cz.
 - Clarified agent ownership, one branch per promptset, and automatic commit/push of verified work chunks.
 - Pin the Arduino PlatformIO platform to `espressif32@7.0.1` so local and CI
   builds cannot silently select a different cached platform fork.

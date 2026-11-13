@@ -1,6 +1,8 @@
 version: "1.2.0"
 description: "64-bit monotonic time helpers"
 license: "MIT"
+maintainers:
+  - "Jan Havelka (THYMOS Solution s.r.o.) <info@thymos.cz>"
 url: "https://github.com/janhavelka/SystemChrono"
 repository: "https://github.com/janhavelka/SystemChrono.git"
 targets:
