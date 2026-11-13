@@ -373,7 +373,7 @@ git push origin main --tags
 
 **Single source of truth:** [library.json](library.json)
 
-**Automatic generation:** [scripts/generate_version.py](scripts/generate_version.py) creates `include/YourLibrary/Version.h` before each build.
+**Generation:** `python scripts/generate_version.py sync` writes `include/SystemChrono/Version.h`, `idf_component.yml` and the `Doxyfile` `PROJECT_NUMBER` from `library.json` deterministically (no timestamp, no Git data). `python scripts/generate_version.py check` is read-only and exits 1 on drift; CI runs it. `bump patch|minor|major` and `set X.Y.Z` update `library.json` and then sync. The PlatformIO pre-script syncs only when files differ and injects `SYSTEMCHRONO_BUILD_*` / `SYSTEMCHRONO_GIT_*` compile definitions, so builds never dirty tracked files.
 
 **Generated constants:**
 - `VERSION_MAJOR`, `VERSION_MINOR`, `VERSION_PATCH` (uint16_t)
@@ -384,7 +384,9 @@ git push origin main --tags
 - `GIT_STATUS` (string) - "clean" or "dirty"
 - `VERSION_FULL` (string) - complete version with build info
 
-**Never edit Version.h manually** - it's regenerated on every build.
+Build constants fall back to `__DATE__`/`__TIME__` and `"unknown"` when the definitions are absent (ESP-IDF, host).
+
+**Never edit Version.h manually** - change `library.json`, run `sync`, commit the result and run `check`.
 
 ---
 

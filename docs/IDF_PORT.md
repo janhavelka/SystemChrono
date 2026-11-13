@@ -129,8 +129,9 @@ dependencies:
   idf: ">=6.0.1"
 ```
 
-Keep PlatformIO Arduino builds separate and continue generating `Version.h`
-from the existing release process.
+Keep PlatformIO Arduino builds separate. `Version.h` is tracked and generated
+deterministically from `library.json` with `python scripts/generate_version.py
+sync`; CI runs the read-only `check`.
 
 ## Example Plan
 
@@ -180,7 +181,7 @@ Completed locally:
 
 - `python -m platformio run -e cli_esp32s3`
 - `python -m platformio run -e cli_esp32s2`
-- `python scripts/generate_version.py`
+- `python scripts/generate_version.py check`
 - `git diff --check`
 
 CI builds `examples/espidf_basic` with ESP-IDF v6.0.1 for `esp32s2` and

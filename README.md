@@ -154,13 +154,20 @@ All three classes (`ElapsedMicros64`, `ElapsedMillis64`, `ElapsedSeconds64`) sup
 
 ## Versioning
 
-The library version is defined in [library.json](library.json). A pre-build script automatically generates `include/SystemChrono/Version.h`.
+The library version is defined in [library.json](library.json). `include/SystemChrono/Version.h`, `idf_component.yml` and the `Doxyfile` `PROJECT_NUMBER` are generated from it:
+
+```bash
+python scripts/generate_version.py sync    # rewrite generated files after a version change
+python scripts/generate_version.py check   # read-only; exits 1 if anything is out of date
+```
+
+`Version.h` is tracked and deterministic (no timestamp, no Git data), so builds do not modify the working tree and ESP-IDF consumers get a valid header. PlatformIO builds run the same script as a pre-script: it syncs only when files differ and injects build date, time, Git commit and dirty state as compile definitions (`SYSTEMCHRONO_BUILD_DATE`, `SYSTEMCHRONO_BUILD_TIME`, `SYSTEMCHRONO_BUILD_TIMESTAMP`, `SYSTEMCHRONO_GIT_COMMIT`, `SYSTEMCHRONO_GIT_STATUS`). Without them (for example in ESP-IDF) the build constants use `__DATE__`/`__TIME__` and `"unknown"`. CI runs `check`.
 
 ```cpp
 #include "SystemChrono/Version.h"
 
-Serial.println(SystemChrono::VERSION);           // "1.1.0"
-Serial.println(SystemChrono::VERSION_FULL);      // "1.1.0 (a1b2c3d, 2026-02-10 15:30:00)"
+Serial.println(SystemChrono::VERSION);           // "1.2.0"
+Serial.println(SystemChrono::VERSION_FULL);      // "1.2.0 (a1b2c3d, 2026-02-10 15:30:00, clean)" in PlatformIO builds
 Serial.println(SystemChrono::BUILD_TIMESTAMP);   // "2026-02-10 15:30:00"
 Serial.println(SystemChrono::GIT_COMMIT);        // "a1b2c3d"
 ```

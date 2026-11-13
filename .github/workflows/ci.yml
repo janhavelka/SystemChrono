@@ -23,6 +23,9 @@ jobs:
           python -c "import json; json.load(open('library.json'))"
           echo "library.json is valid JSON"
 
+      - name: Check generated version files
+        run: python scripts/generate_version.py check
+
       - name: Check native ESP-IDF example contract
         run: python scripts/check_idf_example_contract.py
 

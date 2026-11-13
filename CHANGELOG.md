@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `scripts/generate_version.py` now has `sync`, read-only `check` and
+  `bump`/`set` commands. `Version.h`, `idf_component.yml` and the Doxygen
+  `PROJECT_NUMBER` are generated deterministically from `library.json`; the
+  PlatformIO pre-script no longer rewrites tracked files on every build and
+  passes build date/time and Git identity as compile definitions instead.
+  `BUILD_DATE`, `BUILD_TIME`, `BUILD_TIMESTAMP`, `GIT_COMMIT`, `GIT_STATUS` and
+  `VERSION_FULL` remain available; without the definitions they fall back to
+  `__DATE__`/`__TIME__` and `"unknown"`. CI runs `generate_version.py check`.
+
 ### Added
 - CI now builds both Arduino and native ESP-IDF examples for ESP32-S2/S3,
   checks the ESP-IDF example contract, and runs on every branch push or manually.
