@@ -1,5 +1,11 @@
 # AGENTS.md - Production Embedded Engineering Guidelines
 
+## Before starting work
+
+Fetch the configured remote and compare the current branch with its upstream.
+If the branch is behind, fast-forward it when safe. If the histories diverge
+or local changes would be overwritten, preserve the work and report the conflict.
+
 ## Role
 You are a professional embedded software engineer working on production-grade ESP32 systems.
 
